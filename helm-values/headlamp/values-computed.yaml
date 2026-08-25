@@ -1,0 +1,145 @@
+COMPUTED VALUES:
+affinity: {}
+automountServiceAccountToken: true
+clusterRoleBinding:
+  annotations: {}
+  clusterRoleName: cluster-admin
+  create: true
+config:
+  baseURL: ""
+  clusterInventory:
+    accessProvidersConfig: {}
+    enabled: false
+    labelSelector: '!headlamp.dev/ignore'
+    noCRDCacheTTL: ""
+    plugins: []
+    rootReconcileInterval: ""
+  enableHelm: false
+  extraArgs: []
+  inCluster: true
+  inClusterContextName: main
+  nodeShellImage: ""
+  oidc:
+    callbackURL: ""
+    clientID: ""
+    clientSecret: ""
+    externalSecret:
+      enabled: false
+      hasScopes: false
+      name: ""
+    issuerURL: ""
+    meUserInfoURL: ""
+    scopes: ""
+    secret:
+      create: true
+      name: oidc
+    useAccessToken: false
+    useCookie: false
+    usePKCE: false
+    validatorClientID: ""
+    validatorIssuerURL: ""
+  pluginsDir: /headlamp/plugins
+  podDebugImage: ""
+  serviceAccountTokenPath: ""
+  sessionTTL: 86400
+  unsafeUseServiceAccountToken: false
+  watchPlugins: false
+deploymentAnnotations: {}
+extraContainers: []
+extraManifests: []
+fullnameOverride: ""
+hostAliases: []
+hostUsers: true
+httpRoute:
+  annotations: {}
+  enabled: false
+  hostnames: []
+  labels: {}
+  parentRefs: []
+  rules: []
+image:
+  pullPolicy: IfNotPresent
+  registry: ghcr.io
+  repository: headlamp-k8s/headlamp
+  tag: ""
+imagePullSecrets: []
+ingress:
+  annotations: {}
+  enabled: false
+  hosts: []
+  ingressClassName: ""
+  labels: {}
+  tls: []
+initContainers: []
+nameOverride: ""
+namespaceOverride: ""
+nodeSelector: {}
+persistentVolumeClaim:
+  accessModes: []
+  annotations: {}
+  enabled: false
+  selector: {}
+  size: ""
+  storageClassName: ""
+  volumeMode: ""
+pluginsManager:
+  baseImage: node:lts-alpine
+  configContent: ""
+  configFile: plugin.yml
+  enabled: false
+  securityContext: {}
+  version: latest
+  volumeMounts: []
+podAnnotations: {}
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: null
+  minAvailable: 0
+  unhealthyPodEvictionPolicy: null
+podLabels: {}
+podSecurityContext: {}
+priorityClassName: ""
+probes:
+  livenessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+  scheme: HTTP
+replicaCount: 3
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+securityContext:
+  privileged: false
+  runAsGroup: 101
+  runAsNonRoot: true
+  runAsUser: 100
+service:
+  annotations: {}
+  clusterIP: ""
+  extraServicePorts: []
+  loadBalancerIP: ""
+  loadBalancerSourceRanges: []
+  nodePort: null
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations: {}
+  create: true
+  name: ""
+tolerations: []
+topologySpreadConstraints: []
+volumeMounts: []
+volumes: []

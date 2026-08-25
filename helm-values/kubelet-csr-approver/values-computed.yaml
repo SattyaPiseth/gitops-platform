@@ -1,0 +1,69 @@
+COMPUTED VALUES:
+affinity: {}
+allowedDnsNames: 1
+bypassDnsResolution: false
+bypassHostnameCheck: false
+dnsConfig: {}
+dnsPolicy: ""
+env: []
+extraObjects: []
+fullnameOverride: ""
+ignoreNonSystemNode: false
+image:
+  pullPolicy: IfNotPresent
+  repository: ghcr.io/postfinance/kubelet-csr-approver
+  tag: ""
+imagePullSecrets: []
+leaderElection: true
+loggingLevel: 0
+maxExpirationSeconds: ""
+metrics:
+  annotations: {}
+  enable: true
+  port: 8080
+  serviceMonitor:
+    additionalLabels: {}
+    enabled: false
+    interval: 1m
+    metricRelabelings: []
+    relabelings: []
+    scrapeTimeout: 10s
+  serviceType: ClusterIP
+nameOverride: ""
+namespace: ""
+nodeSelector: {}
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+providerIpPrefixes: 172.16.6.20/32,172.16.6.21/32,172.16.6.22/32,172.16.6.23/32,172.16.6.24/32,172.16.6.25/32
+providerRegex: ^ubuntu-24-04-(mgmt|wrk)-0[1-3]$
+rbac:
+  manage: true
+replicas: 2
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - all
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
+  seccompProfile:
+    type: RuntimeDefault
+serviceAccount:
+  annotations: {}
+  create: true
+  name: ""
+tolerations:
+- effect: NoSchedule
+  key: node-role.kubernetes.io/control-plane
+  operator: Equal
