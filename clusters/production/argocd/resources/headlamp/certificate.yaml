@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: headlamp-tls
+  namespace: headlamp
+spec:
+  secretName: headlamp-tls
+
+  issuerRef:
+    name: k8s-internal-ca
+    kind: ClusterIssuer
+
+  dnsNames:
+    - headlamp.tss.local

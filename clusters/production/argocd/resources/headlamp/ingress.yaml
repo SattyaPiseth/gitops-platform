@@ -8,6 +8,12 @@ metadata:
     app.kubernetes.io/instance: headlamp
 spec:
   ingressClassName: traefik
+
+  tls:
+  - hosts:
+    - headlamp.k8s.tss.local
+    secretName: headlamp-tls
+
   rules:
   - host: headlamp.k8s.tss.local
     http:
