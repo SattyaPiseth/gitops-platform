@@ -21,6 +21,7 @@ rules:
       - replicationcontrollers
       - resourcequotas
       - limitranges
+      - events
     verbs:
       - get
       - list
