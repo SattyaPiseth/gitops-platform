@@ -11,4 +11,4 @@ spec:
     kind: ClusterIssuer
 
   dnsNames:
-    - headlamp.tss.local
+    - headlamp.k8s.tss.local
