@@ -5,9 +5,10 @@ metadata:
   namespace: argocd
 
 spec:
-  project: platform
+  project: headlamp
 
   sources:
+    # Headlamp official Helm chart
     - repoURL: https://kubernetes-sigs.github.io/headlamp/
       chart: headlamp
       targetRevision: 0.43.0
@@ -16,9 +17,15 @@ spec:
         valueFiles:
           - $values/helm-values/headlamp/values.yaml
 
+    # Git repository containing Helm values
     - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
       targetRevision: main
       ref: values
+
+    # Git repository containing Kubernetes resources
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      path: clusters/production/argocd/resources/headlamp
 
   destination:
     server: https://kubernetes.default.svc

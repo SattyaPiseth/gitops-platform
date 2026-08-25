@@ -17,3 +17,6 @@ resources:
 service:
   port: 80
   type: ClusterIP
+
+clusterRoleBinding:
+  enabled: false
