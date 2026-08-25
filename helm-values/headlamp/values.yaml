@@ -3,6 +3,7 @@ replicaCount: 3
 config:
   inCluster: true
   pluginsDir: /headlamp/plugins
+  unsafeUseServiceAccountToken: false
 
 serviceAccount:
   create: true

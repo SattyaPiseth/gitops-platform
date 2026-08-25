@@ -3,12 +3,13 @@ kind: Application
 metadata:
   name: headlamp
   namespace: argocd
-
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
 
   sources:
-    # Headlamp official Helm chart
+    # Source 1: official Helm chart
     - repoURL: https://kubernetes-sigs.github.io/headlamp/
       chart: headlamp
       targetRevision: 0.43.0
@@ -17,14 +18,10 @@ spec:
         valueFiles:
           - $values/helm-values/headlamp/values.yaml
 
-    # Git repository containing Helm values
+    # Source 2: values + additional Kubernetes resources
     - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
       targetRevision: main
       ref: values
-
-    # Git repository containing Kubernetes resources
-    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
-      targetRevision: main
       path: clusters/production/argocd/resources/headlamp
 
   destination:
@@ -33,9 +30,9 @@ spec:
 
   syncPolicy:
     automated:
+      enabled: true
       prune: true
       selfHeal: true
-      
     syncOptions:
       - CreateNamespace=false
       - ApplyOutOfSyncOnly=true

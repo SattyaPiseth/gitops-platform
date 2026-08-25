@@ -5,10 +5,10 @@ metadata:
   namespace: headlamp
 spec:
   secretName: headlamp-tls
+  dnsNames:
+  - headlamp.k8s.tss.local
 
   issuerRef:
     name: k8s-internal-ca
     kind: ClusterIssuer
-
-  dnsNames:
-    - headlamp.k8s.tss.local
+    group: cert-manager.io
