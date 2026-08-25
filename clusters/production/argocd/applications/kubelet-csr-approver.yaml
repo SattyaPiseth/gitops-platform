@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubelet-csr-approver
+  namespace: argocd
+spec:
+  project: platform
+
+  sources:
+    - repoURL: https://postfinance.github.io/kubelet-csr-approver
+      chart: kubelet-csr-approver
+      targetRevision: 1.1.0
+      helm:
+        releaseName: kubelet-csr-approver
+        valueFiles:
+          - $values/helm-values/kubelet-csr-approver/values.yaml
+
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
