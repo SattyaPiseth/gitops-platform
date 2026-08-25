@@ -16,8 +16,8 @@ spec:
         valueFiles:
           - $values/helm-values/headlamp/values.yaml
 
-    - repoURL: git@gitlab.tss.local:devops-group/gitops-platform.git
-      targetRevision: master
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
       ref: values
 
   destination:
