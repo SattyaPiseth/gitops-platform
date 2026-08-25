@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
 
 spec:
-  project: headlamp
+  project: platform
 
   sources:
     # Headlamp official Helm chart
