@@ -1,10 +1,22 @@
+replicaCount: 3
+
 config:
+  inCluster: true
   pluginsDir: /headlamp/plugins
+
+serviceAccount:
+  create: true
+  name: headlamp
+
+clusterRoleBinding:
+  create: false
+
+service:
+  type: ClusterIP
+  port: 80
 
 ingress:
   enabled: false
-
-replicaCount: 3
 
 resources:
   requests:
@@ -13,10 +25,3 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-
-service:
-  port: 80
-  type: ClusterIP
-
-clusterRoleBinding:
-  create: false

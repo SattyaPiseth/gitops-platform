@@ -32,5 +32,10 @@ spec:
     namespace: headlamp
 
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      
     syncOptions:
       - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
