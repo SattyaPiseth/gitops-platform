@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gitlab-kas-tls
+  namespace: gitlab
+spec:
+  secretName: gitlab-kas-tls
+
+  issuerRef:
+    name: k8s-internal-ca
+    kind: ClusterIssuer
+
+  dnsNames:
+    - kas.k8s.tss.local
