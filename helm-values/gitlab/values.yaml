@@ -33,7 +33,7 @@ global:
       enabled: true
 
   hpa:
-  apiVersion: autoscaling/v2
+    apiVersion: autoscaling/v2
 
   pdb:
     apiVersion: policy/v1
