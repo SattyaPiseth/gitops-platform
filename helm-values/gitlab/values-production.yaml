@@ -18,7 +18,7 @@ global:
   # Redis / Valkey
   #
   redis:
-    host: REPLACE_REDIS_FQDN
+    host: redis.k8s.tss.local
     port: 6379
 
     auth:
