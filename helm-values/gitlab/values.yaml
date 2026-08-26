@@ -46,6 +46,9 @@ global:
 
   revisionHistoryLimit: 5
 
+# Disable only for initial Argo CD installation.
+upgradeCheck:
+  enabled: false
 
 # Do not deploy GitLab's bundled ingress controller.
 nginx-ingress:
