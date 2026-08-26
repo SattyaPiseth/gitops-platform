@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitlab-prerequisites
+  namespace: argocd
+
+spec:
+  project: gitlab
+
+  sources:
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      path: platform/gitlab
+
+      directory:
+        recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitlab
+
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

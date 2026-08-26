@@ -1,0 +1,85 @@
+global:
+
+  #
+  # PostgreSQL
+  #
+  psql:
+    host: postgres.k8s.tss.local
+    port: 5432
+
+    database: gitlabhq_production
+    username: gitlab
+
+    password:
+      secret: gitlab-postgresql
+      key: password
+
+  #
+  # Redis / Valkey
+  #
+  redis:
+    host: REPLACE_REDIS_FQDN
+    port: 6379
+
+    auth:
+      enabled: true
+      secret: gitlab-redis
+      key: password
+
+
+  #
+  # Object storage
+  #
+  appConfig:
+    object_store:
+      enabled: true
+
+      connection:
+        secret: gitlab-object-storage
+        key: connection
+
+      proxy_download: true
+
+    artifacts:
+      bucket: gitlab-artifacts
+
+    lfs:
+      bucket: gitlab-lfs
+
+    uploads:
+      bucket: gitlab-uploads
+
+    packages:
+      bucket: gitlab-packages
+
+    externalDiffs:
+      bucket: gitlab-mr-diffs
+
+    terraformState:
+      bucket: gitlab-terraform-state
+
+    dependencyProxy:
+      bucket: gitlab-dependency-proxy
+
+
+#
+# Registry object storage
+#
+registry:
+  enabled: true
+
+  storage:
+    secret: gitlab-registry-storage
+    key: config
+
+
+#
+# Backup configuration
+#
+gitlab:
+  toolbox:
+    backups:
+      objectStorage:
+        config:
+          secret: gitlab-backup-object-storage
+          key: config

@@ -1,0 +1,64 @@
+global:
+  edition: ce
+
+  hosts:
+    domain: k8s.tss.local
+
+    gitlab:
+      name: gitlab.k8s.tss.local
+      https: true
+
+    registry:
+      name: registry.k8s.tss.local
+      https: true
+
+  ingress:
+    enabled: true
+    tls:
+      enabled: true
+      secretName: gitlab-tls
+
+    # Existing Traefik
+    provider: traefik
+    class: traefik
+
+    configureCertmanager: false
+  
+  shell:
+    port: 22
+
+  revisionHistoryLimit: 5
+
+# Disabled another ingress controller
+nginx-ingress:
+  enabled: false
+
+# Existing cert-manager is managed by the platform.
+installCertmanager: false
+
+# Do not install GitLab's optional Prometheus.
+# I already operate kube-prometheus-stack.
+prometheus:
+  install: false
+
+# Do not automatically install another Traefik instance.
+traefik:
+  install: false
+
+# GitLab components
+gitlab:
+  webservice:
+    minReplicas: 2
+
+  sidekiq:
+    minReplicas: 2
+
+  gitlab-shell:
+    minReplicas: 2
+
+    traefik:
+      ingressClassName: traefik
+      entrypoint: gitlab-shell
+
+  toolbox:
+    replicas: 1

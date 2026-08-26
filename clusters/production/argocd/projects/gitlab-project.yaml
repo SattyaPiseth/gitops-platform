@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: gitlab
+  namespace: argocd
+
+spec:
+  description: Production GitLab platform
+
+  sourceRepos:
+    - https://charts.gitlab.io/
+    - https://github.com/SattyaPiseth/gitops-platform.git
+
+  destinations:
+    - namespace: gitlab
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  orphanedResources:
+    warn: true
