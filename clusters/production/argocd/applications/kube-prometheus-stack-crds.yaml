@@ -3,10 +3,10 @@ kind: Application
 metadata:
   name: kube-prometheus-stack-crds
   namespace: argocd
+
 spec:
   project: platform
-  
-  # Source of the application manifests
+
   source:
     repoURL: https://github.com/SattyaPiseth/gitops-platform.git
     targetRevision: main
@@ -14,10 +14,9 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
+    namespace: monitoring
 
   syncPolicy:
     syncOptions:
       - ServerSideApply=true
       - ApplyOutOfSyncOnly=true
-
-
