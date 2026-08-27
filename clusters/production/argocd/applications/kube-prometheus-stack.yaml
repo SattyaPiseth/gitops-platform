@@ -29,7 +29,6 @@ spec:
   # Phase A: manual first sync. Automation is enabled only after validation.
   syncPolicy:
     automated:
-      enabled: false
       prune: false
       selfHeal: false
 
