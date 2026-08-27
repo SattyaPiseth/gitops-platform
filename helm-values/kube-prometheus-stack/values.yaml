@@ -3,6 +3,8 @@
 # Preserve existing production behavior. Do not upgrade chart/components in this change.
 
 crds:
+  # Prometheus Operator CRDs are managed by the dedicated
+  # kube-prometheus-stack-crds Argo CD Application.
   enabled: false
   # Argo CD will render/apply the CRDs. Keep the chart's preview CRD upgrade hook disabled.
   upgradeJob:
