@@ -1,0 +1,120 @@
+# kube-prometheus-stack 87.21.0
+# Phase A: GitOps adoption baseline.
+# Preserve existing production behavior. Do not upgrade chart/components in this change.
+
+crds:
+  enabled: true
+  # Argo CD will render/apply the CRDs. Keep the chart's preview CRD upgrade hook disabled.
+  upgradeJob:
+    enabled: false
+
+alertmanager:
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 10Gi
+
+grafana:
+  replicas: 1
+
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+
+  deploymentStrategy:
+    type: Recreate
+
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    size: 10Gi
+
+  readinessProbe:
+    failureThreshold: 6
+    timeoutSeconds: 5
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 768Mi
+    limits:
+      cpu: 1
+      memory: 1536Mi
+
+  # Preserve current behavior during adoption.
+  # Hardening this cluster-wide sidecar RBAC is a Phase B change.
+  rbac:
+    namespaced: false
+
+  sidecar:
+    dashboards:
+      searchNamespace: ALL
+      resource: both
+
+prometheus:
+  prometheusSpec:
+    replicas: 1
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+    retention: 15d
+    walCompression: true
+    enableAdminAPI: false
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 50Gi
+
+    # Preserve the live monitor-discovery boundaries.
+    serviceMonitorSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    serviceMonitorNamespaceSelector: {}
+
+    podMonitorSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector:
+      matchLabels:
+        monitoring: enabled
+
+    ruleSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    ruleNamespaceSelector: {}
+
+    probeSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    probeNamespaceSelector: {}
+
+    scrapeConfigSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    scrapeConfigNamespaceSelector: {}

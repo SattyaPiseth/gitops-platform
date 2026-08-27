@@ -1,0 +1,58 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+  namespace: monitoring
+spec:
+  secretName: grafana-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  dnsNames:
+    - grafana.k8s.tss.local
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: k8s-internal-ca
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-tls
+  namespace: monitoring
+spec:
+  secretName: prometheus-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  dnsNames:
+    - prometheus.k8s.tss.local
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: k8s-internal-ca
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alertmanager-tls
+  namespace: monitoring
+spec:
+  secretName: alertmanager-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  dnsNames:
+    - alertmanager.k8s.tss.local
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: k8s-internal-ca
