@@ -5,7 +5,8 @@ metadata:
   namespace: argocd
 spec:
   project: platform
-
+  
+  # Source of the application manifests
   source:
     repoURL: https://github.com/SattyaPiseth/gitops-platform.git
     targetRevision: main
@@ -18,3 +19,5 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - ApplyOutOfSyncOnly=true
+
+
