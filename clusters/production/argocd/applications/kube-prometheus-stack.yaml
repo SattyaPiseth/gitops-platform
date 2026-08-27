@@ -29,12 +29,13 @@ spec:
   # Phase A: manual first sync. Automation is enabled only after validation.
   syncPolicy:
     automated:
-      prune: false
-      selfHeal: false
+      prune: true
+      selfHeal: true
 
     syncOptions:
       - CreateNamespace=false
       - ApplyOutOfSyncOnly=true
+      - PruneLast=true
       # Prometheus Operator CRDs are large. SSA avoids the client-side
       # last-applied annotation size limit and is appropriate for CRD adoption.
       # - ServerSideApply=true

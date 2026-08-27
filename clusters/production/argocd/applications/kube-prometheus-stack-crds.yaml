@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack-crds
+  namespace: argocd
+spec:
+  project: platform
+
+  source:
+    repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+    targetRevision: main
+    path: clusters/production/argocd/resources/kube-prometheus-stack-crds
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
