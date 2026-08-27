@@ -37,4 +37,4 @@ spec:
       - ApplyOutOfSyncOnly=true
       # Prometheus Operator CRDs are large. SSA avoids the client-side
       # last-applied annotation size limit and is appropriate for CRD adoption.
-      # - ServerSideApply=true
+      - ServerSideApply=true
