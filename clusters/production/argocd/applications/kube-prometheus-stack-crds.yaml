@@ -18,6 +18,7 @@ spec:
 
   syncPolicy:
     automated:
+      enable: true
       selfHeal: true
 
     retry:
