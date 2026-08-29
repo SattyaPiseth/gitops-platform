@@ -1,5 +1,5 @@
 # CloudNativePG Operator Helm Values
-# Chart: cloudnative-pg/cloudnative-pg (v0.23.1)
+# Chart: cloudnative-pg/cloudnative-pg (v0.29.0 → App: 1.30.0)
 # Namespace: cnpg-system
 
 config:

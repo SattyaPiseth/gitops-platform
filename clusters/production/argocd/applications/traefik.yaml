@@ -12,7 +12,7 @@ spec:
     # Source 1: official Helm chart
     - repoURL: https://traefik.github.io/charts
       chart: traefik
-      targetRevision: 34.4.1
+      targetRevision: 41.3.0
       helm:
         releaseName: traefik
         valueFiles:

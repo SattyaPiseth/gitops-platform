@@ -1,5 +1,5 @@
 # Traefik Ingress Controller Production Helm Values
-# Chart: traefik/traefik (v34.4.1)
+# Chart: traefik/traefik (v41.3.0 → App: v3.7.11)
 # Namespace: traefik
 
 globalArguments:

@@ -1,5 +1,5 @@
 # Longhorn Distributed Block Storage Helm Values
-# Chart: longhorn/longhorn (v1.7.2)
+# Chart: longhorn/longhorn (v1.12.0 → App: v1.12.0)
 # Namespace: longhorn-system
 
 defaultSettings:

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cnpg
+  name: plugin-barman-cloud
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -11,17 +11,10 @@ spec:
   sources:
     # Source 1: official Helm chart
     - repoURL: https://cloudnative-pg.github.io/charts
-      chart: cloudnative-pg
-      targetRevision: 0.29.0
+      chart: plugin-barman-cloud
+      targetRevision: 0.7.1
       helm:
-        releaseName: cnpg
-        valueFiles:
-          - $values/helm-values/cnpg/values.yaml
-
-    # Source 2: values from git repository
-    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
-      targetRevision: main
-      ref: values
+        releaseName: plugin-barman-cloud
 
   destination:
     server: https://kubernetes.default.svc
