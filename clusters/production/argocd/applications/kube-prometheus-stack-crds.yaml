@@ -18,7 +18,6 @@ spec:
 
   syncPolicy:
     automated:
-      enable: true
       selfHeal: true
 
     retry:
@@ -30,4 +29,4 @@ spec:
 
     syncOptions:
       - ServerSideApply=true
-      # - ApplyOutOfSyncOnly=true
+      - ApplyOutOfSyncOnly=true
