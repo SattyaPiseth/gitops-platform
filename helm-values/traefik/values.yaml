@@ -2,9 +2,10 @@
 # Chart: traefik/traefik (v41.3.0 → App: v3.7.11)
 # Namespace: traefik
 
-globalArguments:
-  - "--global.checknewversion=false"
-  - "--global.sendanonymoususage=false"
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
 
 ingressClass:
   enabled: true
