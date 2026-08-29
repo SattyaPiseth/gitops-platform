@@ -5,4 +5,7 @@ metadata:
   namespace: vault-secrets-operator-system
 spec:
   address: https://vault.k8s.tss.local:8200
+  # Secret must contain the trusted PEM CA chain under the key ca.crt.
+  # Create it in this namespace before synchronizing this resource.
+  caCertSecretRef: vault-ca
   skipTLSVerify: false
