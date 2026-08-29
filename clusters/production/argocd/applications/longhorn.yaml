@@ -1,22 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: gitlab-runner
+  name: longhorn
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: gitlab
+  project: platform
 
   sources:
-    # Source 1: official GitLab Helm chart
-    - repoURL: https://charts.gitlab.io/
-      chart: gitlab-runner
-      targetRevision: 0.68.1
+    # Source 1: official Helm chart
+    - repoURL: https://charts.longhorn.io
+      chart: longhorn
+      targetRevision: 1.7.2
       helm:
-        releaseName: gitlab-runner
+        releaseName: longhorn
         valueFiles:
-          - $values/helm-values/gitlab-runner/values.yaml
+          - $values/helm-values/longhorn/values.yaml
 
     # Source 2: values from git repository
     - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
@@ -25,7 +25,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: gitlab
+    namespace: longhorn-system
 
   syncPolicy:
     automated:

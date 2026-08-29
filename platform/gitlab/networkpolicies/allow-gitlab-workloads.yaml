@@ -1,0 +1,42 @@
+# Allow Internal Workload Communication and External State Dependencies (DB, Redis, S3)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gitlab-workloads
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow intra-namespace traffic between GitLab pods
+    - from:
+        - podSelector: {}
+  egress:
+    # Allow intra-namespace traffic between GitLab pods
+    - to:
+        - podSelector: {}
+
+    # Allow egress to PostgreSQL Database (5432)
+    - ports:
+        - protocol: TCP
+          port: 5432
+
+    # Allow egress to Redis Cache (6379)
+    - ports:
+        - protocol: TCP
+          port: 6379
+
+    # Allow egress to S3 Object Storage & Outbound HTTPS (443)
+    - ports:
+        - protocol: TCP
+          port: 443
+
+    # Allow egress for Git operations / SSH (22)
+    - ports:
+        - protocol: TCP
+          port: 22

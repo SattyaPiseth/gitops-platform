@@ -1,0 +1,36 @@
+# Allow Inbound Traffic from Traefik Ingress Controller to GitLab Services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik-ingress
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["webservice", "registry", "kas", "gitlab-shell"]
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from Traefik Ingress pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8181
+        - protocol: TCP
+          port: 5000
+        - protocol: TCP
+          port: 8150
+        - protocol: TCP
+          port: 8154
+        - protocol: TCP
+          port: 2222

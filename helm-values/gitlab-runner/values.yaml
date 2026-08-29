@@ -1,0 +1,54 @@
+# GitLab Runner Helm Values
+# Chart: gitlab/gitlab-runner (0.68.1)
+# Namespace: gitlab
+
+gitlabUrl: https://gitlab.k8s.tss.local/
+
+# Use existing TLS secret for internal CA validation
+certsSecretName: gitlab-tls
+
+# Number of concurrent jobs to run
+concurrent: 10
+
+# Polling interval in seconds
+checkInterval: 30
+
+rbac:
+  create: true
+  clusterWideAccess: false
+
+runners:
+  name: k8s-production-runner
+  tags: "k8s,production,linux"
+  locked: false
+  runUntagged: true
+
+  # Secret containing the runner registration or authentication token
+  # Key: runner-registration-token or runner-token
+  secret: gitlab-runner-secret
+
+  # Executor configuration
+  config: |
+    [[runners]]
+      [runners.kubernetes]
+        namespace = "gitlab"
+        image = "ubuntu:24.04"
+        privileged = false
+        cpu_request = "250m"
+        cpu_limit = "2"
+        memory_request = "512Mi"
+        memory_limit = "4Gi"
+        service_cpu_request = "100m"
+        service_cpu_limit = "1"
+        service_memory_request = "256Mi"
+        service_memory_limit = "2Gi"
+        poll_interval = 5
+        poll_timeout = 3600
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

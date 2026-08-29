@@ -1,0 +1,24 @@
+# Longhorn Distributed Block Storage Helm Values
+# Chart: longhorn/longhorn (v1.7.2)
+# Namespace: longhorn-system
+
+defaultSettings:
+  defaultReplicaCount: 3
+  defaultDataPath: /var/lib/longhorn
+  defaultDataLocality: best-effort
+  allowVolumeCreationWithDegradedAvailability: "false"
+  storageOverProvisioningPercentage: 100
+  storageMinimalAvailablePercentage: 25
+  replicaSoftAntiAffinity: "false"
+  priorityClass: longhorn-critical
+
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 3
+  reclaimPolicy: Delete
+
+csi:
+  attacherReplicaCount: 2
+  provisionerReplicaCount: 2
+  resizerReplicaCount: 2
+  snapshotterReplicaCount: 2

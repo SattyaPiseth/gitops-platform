@@ -1,0 +1,50 @@
+# GitLab Platform Vault Authentication
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-vault-auth
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/component: platform-auth
+    app.kubernetes.io/managed-by: argocd
+
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: gitlab-vault-auth
+  namespace: gitlab
+spec:
+  vaultConnectionRef: vault-secrets-operator-system/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: gitlab-platform
+    serviceAccount: gitlab-vault-auth
+
+---
+# GitLab Runner Vault Authentication (Isolated Identity)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-runner-vault-auth
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab-runner
+    app.kubernetes.io/component: runner-auth
+    app.kubernetes.io/managed-by: argocd
+
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: gitlab-runner-vault-auth
+  namespace: gitlab
+spec:
+  vaultConnectionRef: vault-secrets-operator-system/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: gitlab-runner
+    serviceAccount: gitlab-runner-vault-auth

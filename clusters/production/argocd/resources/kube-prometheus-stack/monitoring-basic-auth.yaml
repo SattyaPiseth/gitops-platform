@@ -1,0 +1,33 @@
+# Traefik Basic Authentication Middleware for Administrative Monitoring Endpoints
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: monitoring-basic-auth
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    app.kubernetes.io/managed-by: argocd
+spec:
+  basicAuth:
+    secret: monitoring-basic-auth-secret
+    removeHeader: true
+
+---
+# Vault-Managed Basic Auth Secret for Prometheus and Alertmanager
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: monitoring-basic-auth-secret
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: kv-v2
+  mount: kv
+  path: monitoring/basic-auth
+  vaultAuthRef: grafana-vault-auth
+  destination:
+    name: monitoring-basic-auth-secret
+    create: true
+  syncPeriod: 5m

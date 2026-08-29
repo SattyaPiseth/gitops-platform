@@ -1,0 +1,35 @@
+# CloudNativePG Operator Helm Values
+# Chart: cloudnative-pg/cloudnative-pg (v0.23.1)
+# Namespace: cnpg-system
+
+config:
+  clusterWide: true
+  create: true
+  maxConcurrentReconciles: 10
+  name: cnpg-controller-manager-config
+
+crds:
+  create: true
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+monitoring:
+  podMonitorEnabled: false

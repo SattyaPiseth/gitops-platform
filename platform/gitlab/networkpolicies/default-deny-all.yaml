@@ -1,0 +1,14 @@
+# Zero-Trust Baseline: Default Deny Ingress & Egress for all pods in gitlab namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

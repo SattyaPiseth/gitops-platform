@@ -13,6 +13,7 @@ spec:
     - https://prometheus-community.github.io/helm-charts
     - https://postfinance.github.io/kubelet-csr-approver
     - https://traefik.github.io/charts
+    - https://helm.releases.hashicorp.com
     - https://github.com/SattyaPiseth/gitops-platform.git
 
   destinations:
@@ -28,11 +29,34 @@ spec:
       namespace: longhorn-system
     - server: https://kubernetes.default.svc
       namespace: traefik
+    - server: https://kubernetes.default.svc
+      namespace: vault-secrets-operator-system
+    - server: https://kubernetes.default.svc
+      namespace: argocd
 
   clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: ""
+      kind: Namespace
+    - group: "rbac.authorization.k8s.io"
+      kind: ClusterRole
+    - group: "rbac.authorization.k8s.io"
+      kind: ClusterRoleBinding
+    - group: "apiextensions.k8s.io"
+      kind: CustomResourceDefinition
+    - group: "cert-manager.io"
+      kind: ClusterIssuer
+    - group: "storage.k8s.io"
+      kind: StorageClass
+    - group: "storage.k8s.io"
+      kind: CSIDriver
+    - group: "storage.k8s.io"
+      kind: CSINode
+    - group: "networking.k8s.io"
+      kind: IngressClass
+    - group: "certificates.k8s.io"
+      kind: CertificateSigningRequest
 
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
+

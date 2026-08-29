@@ -1,0 +1,34 @@
+# Vault Secrets Operator (VSO) Helm values
+# Chart: hashicorp/vault-secrets-operator (v0.9.1)
+# Namespace: vault-secrets-operator-system
+
+controller:
+  replicaCount: 2
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+telemetry:
+  serviceMonitor:
+    enabled: true
+    interval: 30s

@@ -1,10 +1,10 @@
-# Normalized from the live production Traefik IngressRoutes.
-# Server-generated metadata and kubectl last-applied annotations are intentionally omitted.
+# Production Traefik IngressRoutes for kube-prometheus-stack.
 #
-# SECURITY NOTE:
-# The live routes do not reference any Middleware. TLS encrypts traffic but does not
-# authenticate users. Preserve this exact behavior during Phase A adoption, then add
-# an approved authentication boundary in a separate reviewed Phase B change.
+# SECURITY BOUNDARY (Hardened):
+# - Grafana handles application-level user authentication.
+# - Prometheus and Alertmanager administrative endpoints are protected by Traefik
+#   'monitoring-basic-auth' Middleware with credentials managed via Vault Secrets Operator.
+
 
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -36,6 +36,8 @@ spec:
   routes:
     - kind: Rule
       match: Host(`prometheus.k8s.tss.local`)
+      middlewares:
+        - name: monitoring-basic-auth
       services:
         - kind: Service
           name: kube-prometheus-stack-prometheus
@@ -55,6 +57,8 @@ spec:
   routes:
     - kind: Rule
       match: Host(`alertmanager.k8s.tss.local`)
+      middlewares:
+        - name: monitoring-basic-auth
       services:
         - kind: Service
           name: kube-prometheus-stack-alertmanager

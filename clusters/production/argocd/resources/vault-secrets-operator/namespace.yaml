@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault-secrets-operator-system
+  labels:
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/managed-by: argocd
+    environment: production

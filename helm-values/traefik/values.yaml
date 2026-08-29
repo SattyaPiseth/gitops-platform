@@ -1,0 +1,78 @@
+# Traefik Ingress Controller Production Helm Values
+# Chart: traefik/traefik (v34.4.1)
+# Namespace: traefik
+
+globalArguments:
+  - "--global.checknewversion=false"
+  - "--global.sendanonymoususage=false"
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+
+ports:
+  web:
+    port: 8000
+    exposedPort: 80
+    expose:
+      default: true
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    port: 8443
+    exposedPort: 443
+    expose:
+      default: true
+    http:
+      tls:
+        enabled: true
+
+  metrics:
+    port: 9100
+    exposedPort: 9100
+    expose:
+      default: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    publishedService:
+      enabled: true
+
+service:
+  enabled: true
+  single: true
+  spec:
+    type: LoadBalancer
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
