@@ -1,13 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
+
 metadata:
   name: kube-prometheus-stack
   namespace: argocd
+
 spec:
   project: platform
 
   sources:
-    # Official kube-prometheus-stack chart.
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
       targetRevision: 87.21.0
@@ -16,7 +17,6 @@ spec:
         valueFiles:
           - $values/helm-values/kube-prometheus-stack/values.yaml
 
-    # Git source provides both $values and non-chart monitoring resources.
     - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
       targetRevision: main
       ref: values
@@ -26,16 +26,20 @@ spec:
     server: https://kubernetes.default.svc
     namespace: monitoring
 
-  # Phase A: manual first sync. Automation is enabled only after validation.
+  # Automated reconciliation enabled after successful GitOps adoption.
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
 
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
     syncOptions:
       - CreateNamespace=false
       - ApplyOutOfSyncOnly=true
       - PruneLast=true
-      # Prometheus Operator CRDs are large. SSA avoids the client-side
-      # last-applied annotation size limit and is appropriate for CRD adoption.
-      # - ServerSideApply=true
