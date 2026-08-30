@@ -45,6 +45,7 @@ spec:
     type: Opaque
     create: true
     transformation:
+      excludeRaw: true
       excludes:
         - .*
       templates:
