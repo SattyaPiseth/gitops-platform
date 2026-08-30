@@ -30,4 +30,6 @@ spec:
   destination:
     name: monitoring-basic-auth-secret
     create: true
-  syncPeriod: 5m
+    transformation:
+      excludeRaw: true
+  refreshAfter: 5m
