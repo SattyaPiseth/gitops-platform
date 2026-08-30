@@ -13,7 +13,7 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 spec:
   description: Production PostgreSQL cluster for GitLab
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.6
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.9@sha256:855b5f86257a51f49e406f4de317205d42313b64ef81644675f0263e8efec116
   instances: 3
 
   bootstrap:
