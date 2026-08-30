@@ -4,7 +4,7 @@ global:
   # PostgreSQL
   #
   psql:
-    host: postgres.k8s.tss.local
+    host: gitlab-postgresql-rw.gitlab.svc.cluster.local
     port: 5432
 
     database: gitlabhq_production
