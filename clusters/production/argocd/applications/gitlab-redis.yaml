@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitlab-redis
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: gitlab
+  sources:
+    - repoURL: https://ot-container-kit.github.io/helm-charts
+      chart: redis-replication
+      targetRevision: 0.17.1
+      helm:
+        releaseName: gitlab-redis
+        valueFiles:
+          - $values/helm-values/gitlab/redis-values.yaml
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitlab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=false

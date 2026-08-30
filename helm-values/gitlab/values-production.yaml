@@ -18,8 +18,13 @@ global:
   # Redis / Valkey
   #
   redis:
-    host: redis.k8s.tss.local
+    # Sentinel primary group name, not a DNS hostname.
+    host: mymaster
     port: 6379
+
+    sentinels:
+      - host: gitlab-redis-s-hl.gitlab.svc.cluster.local
+        port: 26379
 
     auth:
       enabled: true

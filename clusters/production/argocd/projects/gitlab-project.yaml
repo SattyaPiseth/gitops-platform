@@ -9,6 +9,7 @@ spec:
 
   sourceRepos:
     - https://charts.gitlab.io/
+    - https://ot-container-kit.github.io/helm-charts
     - https://github.com/SattyaPiseth/gitops-platform.git
 
   destinations:

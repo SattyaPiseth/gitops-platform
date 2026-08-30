@@ -13,7 +13,7 @@
 ### Infrastructure Configuration (In Git)
 The following parameters describe topology, hostnames, ports, database names, and non-sensitive settings. They reside in GitOps Helm values ([`helm-values/gitlab/values-production.yaml`](file:///opt/gitops-platform/helm-values/gitlab/values-production.yaml)):
 * PostgreSQL Host: `gitlab-postgresql-rw.gitlab.svc.cluster.local`, Port: `5432`, Database: `gitlabhq_production`, User: `gitlab`
-* Redis Host: `redis.k8s.tss.local`, Port: `6379`, Auth Enabled: `true`
+* Redis Sentinel: master group `mymaster`, discovery service `gitlab-redis-s-hl.gitlab.svc.cluster.local:26379`, authentication enabled
 * Object Storage: Endpoint: `https://s3.k8s.tss.local`, Bucket names, `proxy_download: true`
 * Runner Configuration: `gitlabUrl: https://gitlab.k8s.tss.local/`, concurrency: `10`, images, resources
 
@@ -108,7 +108,7 @@ GitLab Runner
 Before proceeding to deploy GitLab CE:
 
 - [ ] **PostgreSQL**: Reachable at `gitlab-postgresql-rw.gitlab.svc.cluster.local:5432`, `gitlabhq_production` DB created, user `gitlab` granted privileges and required extensions (`pg_trgm`, `btree_gist`, `amcheck`).
-- [ ] **Redis**: Reachable at `redis.k8s.tss.local:6379`, password authentication active.
+- [ ] **Redis**: Three replication pods and three Sentinel pods ready; `mymaster` is discoverable through `gitlab-redis-s-hl.gitlab.svc.cluster.local:26379`; password authentication active.
 - [ ] **Object Storage**: All 10 buckets created in S3 backend; S3 credentials tested for Rails, Registry, and Backup.
 - [ ] **Vault**: KV v2 engine enabled; secrets populated under `kv/data/gitlab/*` and `kv/data/gitlab-runner/*`.
 - [ ] **Vault Policies & Roles**: `gitlab-platform` and `gitlab-runner` roles configured and bound to their respective Kubernetes ServiceAccounts.

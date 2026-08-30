@@ -33,14 +33,6 @@ spec:
     - to:
         - podSelector: {}
 
-    # Redis production endpoint currently resolves to the internal LB address.
-    - to:
-        - ipBlock:
-            cidr: 172.16.6.200/32
-      ports:
-        - protocol: TCP
-          port: 6379
-
     # Kubernetes API backends (the CNI enforces policy after Service DNAT).
     - to:
         - ipBlock:

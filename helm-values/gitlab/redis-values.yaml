@@ -1,0 +1,125 @@
+# OT Redis Operator replication chart 0.17.1.
+# GitLab uses Sentinel to discover the writable primary; this is not Redis Cluster mode.
+redisReplication:
+  name: gitlab-redis
+  clusterSize: 3
+  image: quay.io/opstree/redis
+  tag: v7.2.16
+  imagePullPolicy: IfNotPresent
+  redisSecret:
+    secretName: gitlab-redis
+    secretKey: password
+  serviceType: ClusterIP
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  maxMemoryPercentOfLimit: 75
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
+externalConfig:
+  enabled: true
+  data: |
+    appendonly yes
+    appendfsync everysec
+    maxmemory-policy noeviction
+    tcp-keepalive 300
+    timeout 0
+
+storageSpec:
+  volumeClaimTemplate:
+    spec:
+      storageClassName: longhorn
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+
+nodeSelector:
+  node-role.kubernetes.io/storage: "true"
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: gitlab-redis
+        topologyKey: kubernetes.io/hostname
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+
+pdb:
+  enabled: true
+  minAvailable: 2
+
+redisExporter:
+  enabled: true
+  image: quay.io/opstree/redis-exporter
+  tag: v1.89.0
+  imagePullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  extraLabels:
+    release: kube-prometheus-stack
+
+sentinel:
+  enabled: true
+  image: quay.io/opstree/redis-sentinel
+  tag: v7.2.16
+  imagePullPolicy: IfNotPresent
+  size: 3
+  redisSecret:
+    secretName: gitlab-redis
+    secretKey: password
+  parallelSyncs: "1"
+  failoverTimeout: "180000"
+  downAfterMilliseconds: "10000"
+  resolveHostnames: "no"
+  announceHostnames: "no"
+  nodeSelector:
+    node-role.kubernetes.io/storage: "true"
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: gitlab-redis-s
+          topologyKey: kubernetes.io/hostname
+  nodeSelector:
+    node-role.kubernetes.io/storage: "true"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

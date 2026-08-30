@@ -4,6 +4,9 @@ metadata:
   name: gitlab-prerequisites
   namespace: argocd
 
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+
 spec:
   project: gitlab
 
