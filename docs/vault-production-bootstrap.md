@@ -15,26 +15,44 @@ kubectl wait -n vault --for=condition=Ready certificate/vault-server --timeout=1
 
 # This prints unseal keys and an initial root token. Capture them directly into
 # an approved password manager/HSM workflow; never redirect them into this repo.
-kubectl exec -n vault vault-0 -- vault operator init \
+kubectl exec -n vault vault-0 -- env \
+  VAULT_ADDR=https://vault-0.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator init \
   -key-shares=5 -key-threshold=3
 
 # Repeat with three distinct unseal-key shares for vault-0.
-kubectl exec -it -n vault vault-0 -- vault operator unseal
+kubectl exec -it -n vault vault-0 -- env \
+  VAULT_ADDR=https://vault-0.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator unseal
 
 # Join followers, then unseal each with three shares.
-kubectl exec -n vault vault-1 -- vault operator raft join \
+kubectl exec -n vault vault-1 -- env \
+  VAULT_ADDR=https://vault-1.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator raft join \
   -leader-ca-cert=@/vault/userconfig/vault-server-tls/ca.crt \
   -leader-client-cert=@/vault/userconfig/vault-server-tls/tls.crt \
   -leader-client-key=@/vault/userconfig/vault-server-tls/tls.key \
   https://vault-0.vault-internal:8200
-kubectl exec -it -n vault vault-1 -- vault operator unseal
+kubectl exec -it -n vault vault-1 -- env \
+  VAULT_ADDR=https://vault-1.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator unseal
 
-kubectl exec -n vault vault-2 -- vault operator raft join \
+kubectl exec -n vault vault-2 -- env \
+  VAULT_ADDR=https://vault-2.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator raft join \
   -leader-ca-cert=@/vault/userconfig/vault-server-tls/ca.crt \
   -leader-client-cert=@/vault/userconfig/vault-server-tls/tls.crt \
   -leader-client-key=@/vault/userconfig/vault-server-tls/tls.key \
   https://vault-0.vault-internal:8200
-kubectl exec -it -n vault vault-2 -- vault operator unseal
+kubectl exec -it -n vault vault-2 -- env \
+  VAULT_ADDR=https://vault-2.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator unseal
 ```
 
 Shamir-sealed pods must be unsealed after restart. Replace this process with a
@@ -49,7 +67,7 @@ Run these commands inside `vault-0` with `VAULT_TOKEN` supplied interactively.
 
 ```bash
 kubectl exec -it -n vault vault-0 -- sh
-export VAULT_ADDR=https://127.0.0.1:8200
+export VAULT_ADDR=https://vault-0.vault-internal:8200
 export VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt
 export VAULT_TOKEN='<INITIAL_ROOT_TOKEN>'
 
@@ -113,8 +131,14 @@ kv/monitoring/basic-auth             users
 # Argo CD and Vault workload
 kubectl get applications -n argocd
 kubectl get pods,pvc,svc,pdb -n vault
-kubectl exec -n vault vault-0 -- vault status
-kubectl exec -n vault vault-0 -- vault operator raft list-peers
+kubectl exec -n vault vault-0 -- env \
+  VAULT_ADDR=https://vault-0.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault status
+kubectl exec -n vault vault-0 -- env \
+  VAULT_ADDR=https://vault-0.vault-internal:8200 \
+  VAULT_CACERT=/vault/userconfig/vault-server-tls/ca.crt \
+  vault operator raft list-peers
 
 # TLS and external Traefik passthrough
 kubectl get certificate,secret -n vault
