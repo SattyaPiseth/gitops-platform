@@ -16,6 +16,20 @@ spec:
     # Allow intra-namespace traffic between GitLab pods
     - from:
         - podSelector: {}
+    # Allow the Redis Operator to reconcile replication roles and Sentinel.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: redis-operator
+          podSelector:
+            matchLabels:
+              name: redis-operator
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 26379
+
     # Allow the CNPG operator to query the instance-manager status endpoint.
     - from:
         - namespaceSelector:
