@@ -29,6 +29,18 @@ spec:
         - protocol: TCP
           port: 6379
 
+    # Kubernetes API backends (the CNI enforces policy after Service DNAT).
+    - to:
+        - ipBlock:
+            cidr: 172.16.6.20/32
+        - ipBlock:
+            cidr: 172.16.6.21/32
+        - ipBlock:
+            cidr: 172.16.6.22/32
+      ports:
+        - protocol: TCP
+          port: 6443
+
     # HTTPS remains destination-open until S3 and approved external API CIDRs
     # are inventoried; Kubernetes NetworkPolicy cannot select DNS names.
     - ports:
