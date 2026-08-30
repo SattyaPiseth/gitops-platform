@@ -20,6 +20,8 @@ spec:
   method: kubernetes
   mount: kubernetes
   kubernetes:
+    audiences:
+      - vault
     role: gitlab-platform
     serviceAccount: gitlab-vault-auth
 
@@ -46,5 +48,7 @@ spec:
   method: kubernetes
   mount: kubernetes
   kubernetes:
+    audiences:
+      - vault
     role: gitlab-runner
     serviceAccount: gitlab-runner-vault-auth

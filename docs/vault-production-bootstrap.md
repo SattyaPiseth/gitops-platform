@@ -98,16 +98,19 @@ HCL
 vault write auth/kubernetes/role/gitlab-platform \
   bound_service_account_names=gitlab-vault-auth \
   bound_service_account_namespaces=gitlab \
+  audience=vault \
   policies=gitlab-platform ttl=1h
 
 vault write auth/kubernetes/role/gitlab-runner \
   bound_service_account_names=gitlab-runner-vault-auth \
   bound_service_account_namespaces=gitlab \
+  audience=vault \
   policies=gitlab-runner ttl=1h
 
 vault write auth/kubernetes/role/grafana-monitoring \
   bound_service_account_names=grafana-vault-auth \
   bound_service_account_namespaces=monitoring \
+  audience=vault \
   policies=grafana-monitoring ttl=1h
 ```
 

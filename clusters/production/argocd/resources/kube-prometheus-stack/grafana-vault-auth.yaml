@@ -19,5 +19,7 @@ spec:
   method: kubernetes
   mount: kubernetes
   kubernetes:
+    audiences:
+      - vault
     role: grafana-monitoring
     serviceAccount: grafana-vault-auth
