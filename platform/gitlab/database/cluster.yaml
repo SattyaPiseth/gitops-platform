@@ -50,7 +50,7 @@ spec:
     podAntiAffinityType: required
     topologyKey: kubernetes.io/hostname
     nodeSelector:
-      node-role.kubernetes.io/storage: ""
+      node-role.kubernetes.io/storage: "true"
 
   postgresql:
     parameters:
