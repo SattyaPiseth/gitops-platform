@@ -21,22 +21,29 @@ spec:
     - to:
         - podSelector: {}
 
-    # Allow egress to PostgreSQL Database (5432)
-    - ports:
+    # External PostgreSQL production endpoint: postgres.k8s.tss.local
+    - to:
+        - ipBlock:
+            cidr: 172.16.6.201/32
+      ports:
         - protocol: TCP
           port: 5432
 
-    # Allow egress to Redis Cache (6379)
-    - ports:
+    # Redis production endpoint currently resolves to the internal LB address.
+    - to:
+        - ipBlock:
+            cidr: 172.16.6.200/32
+      ports:
         - protocol: TCP
           port: 6379
 
-    # Allow egress to S3 Object Storage & Outbound HTTPS (443)
+    # HTTPS remains destination-open until S3 and approved external API CIDRs
+    # are inventoried; Kubernetes NetworkPolicy cannot select DNS names.
     - ports:
         - protocol: TCP
           port: 443
 
-    # Allow egress for Git operations / SSH (22)
+    # SSH remains destination-open for user-configured external Git remotes.
     - ports:
         - protocol: TCP
           port: 22
