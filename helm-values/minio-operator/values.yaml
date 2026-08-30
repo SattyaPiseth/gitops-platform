@@ -1,0 +1,18 @@
+operator:
+  image:
+    repository: quay.io/minio/operator
+    tag: v7.1.1
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  additionalLabels:
+    app.kubernetes.io/part-of: object-storage
+    environment: pre-production
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+      ephemeral-storage: 500Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 1Gi

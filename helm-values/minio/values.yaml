@@ -1,0 +1,144 @@
+tenant:
+  name: minio
+
+  # The upstream community chart and image are immutable here because the
+  # MinIO community/operator lifecycle is an accepted pre-production risk.
+  image:
+    repository: quay.io/minio/minio
+    tag: RELEASE.2025-04-08T15-41-24Z
+    pullPolicy: IfNotPresent
+
+  configSecret:
+    name: minio-root-credentials
+    existingSecret: true
+
+  poolsMetadata:
+    labels:
+      app.kubernetes.io/part-of: object-storage
+      environment: pre-production
+
+  pools:
+    - name: pool-0
+      servers: 4
+      volumesPerServer: 1
+      size: 25Gi
+      storageClassName: longhorn-minio
+      storageLabels:
+        app.kubernetes.io/part-of: object-storage
+        environment: pre-production
+      labels:
+        app.kubernetes.io/part-of: object-storage
+        environment: pre-production
+      nodeSelector:
+        node-role.kubernetes.io/storage: "true"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    v1.min.io/tenant: minio
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              v1.min.io/tenant: minio
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 4Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+      containerSecurityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+
+  mountPath: /export
+  subPath: /data
+
+  metrics:
+    enabled: true
+    port: 9000
+    protocol: https
+
+  certificate:
+    requestAutoCert: false
+    certExpiryAlertThreshold: 15
+    externalCertSecret:
+      - name: minio-server-tls
+        type: kubernetes.io/tls
+    externalCaCertSecret:
+      - name: minio-server-tls
+        type: kubernetes.io/tls
+
+  features:
+    bucketDNS: false
+    enableSFTP: false
+
+  buckets:
+    - name: gitlab-artifacts
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-lfs
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-uploads
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-packages
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-mr-diffs
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-terraform-state
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-dependency-proxy
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-registry
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-backups
+      region: us-east-1
+      objectLock: false
+    - name: gitlab-backup-tmp
+      region: us-east-1
+      objectLock: false
+    - name: cnpg-backups
+      region: us-east-1
+      objectLock: false
+
+  exposeServices:
+    minio: false
+    console: false
+
+  prometheusOperator: false
+  logging:
+    json: true
+  env:
+    - name: MINIO_SITE_REGION
+      value: us-east-1
+    - name: MINIO_PROMETHEUS_AUTH_TYPE
+      value: public
+    - name: MINIO_BROWSER
+      value: "off"

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio-system
+  labels:
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+    environment: pre-production
+    monitoring: enabled
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

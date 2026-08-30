@@ -1,0 +1,33 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-server-tls
+  namespace: minio-system
+  labels:
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  secretName: minio-server-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  usages:
+    - server auth
+  dnsNames:
+    - s3.k8s.tss.local
+    - minio
+    - minio.minio-system
+    - minio.minio-system.svc
+    - minio.minio-system.svc.cluster.local
+    - minio-hl
+    - minio-hl.minio-system
+    - minio-hl.minio-system.svc
+    - minio-hl.minio-system.svc.cluster.local
+    - "*.minio-hl.minio-system.svc.cluster.local"
+  issuerRef:
+    name: k8s-internal-ca
+    kind: ClusterIssuer
+    group: cert-manager.io

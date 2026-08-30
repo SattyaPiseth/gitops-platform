@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio-vault-auth
+  namespace: minio-system
+  labels:
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: minio-vault-auth
+  namespace: minio-system
+  labels:
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  vaultConnectionRef: vault-secrets-operator-system/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    audiences:
+      - vault
+    role: minio-platform
+    serviceAccount: minio-vault-auth
+
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: minio-root-credentials
+  namespace: minio-system
+  labels:
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: kv-v2
+  mount: kv
+  path: minio/root
+  vaultAuthRef: minio-vault-auth
+  destination:
+    name: minio-root-credentials
+    type: Opaque
+    create: true
+    transformation:
+      excludes:
+        - .*
+      templates:
+        config.env:
+          text: |
+            {{- printf "export MINIO_ROOT_USER='%s'\nexport MINIO_ROOT_PASSWORD='%s'\n" (get .Secrets "root-user") (get .Secrets "root-password") -}}
+  refreshAfter: 5m

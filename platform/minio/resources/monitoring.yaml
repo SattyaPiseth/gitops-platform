@@ -1,0 +1,72 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: minio
+  namespace: minio-system
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  selector:
+    matchLabels:
+      v1.min.io/tenant: minio
+  endpoints:
+    - port: https-minio
+      scheme: https
+      path: /minio/v2/metrics/cluster
+      interval: 30s
+      scrapeTimeout: 10s
+      tlsConfig:
+        serverName: minio.minio-system.svc.cluster.local
+        ca:
+          secret:
+            name: minio-server-tls
+            key: ca.crt
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: minio
+  namespace: minio-system
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: object-storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  groups:
+    - name: minio.preproduction
+      rules:
+        - alert: MinIOStatefulSetUnavailable
+          expr: kube_statefulset_status_replicas_ready{namespace="minio-system"} < kube_statefulset_replicas{namespace="minio-system"}
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: MinIO has unavailable replicas
+            description: One or more MinIO Tenant replicas have been unavailable for 10 minutes.
+        - alert: MinIOPVCUsageHigh
+          expr: max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace="minio-system"} / kubelet_volume_stats_capacity_bytes{namespace="minio-system"}) > 0.75
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: MinIO PVC usage exceeds 75 percent
+            description: A MinIO PVC requires capacity review or controlled expansion.
+        - alert: MinIOPVCUsageCritical
+          expr: max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace="minio-system"} / kubelet_volume_stats_capacity_bytes{namespace="minio-system"}) > 0.85
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: MinIO PVC usage exceeds 85 percent
+            description: A MinIO PVC is approaching the reserved emergency capacity threshold.
+        - alert: MinIOMetricsAbsent
+          expr: absent(up{namespace="minio-system",service="minio"} == 1)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus cannot scrape MinIO
+            description: No healthy MinIO metrics target has been visible for 15 minutes.
