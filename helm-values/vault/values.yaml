@@ -1,0 +1,137 @@
+# HashiCorp Vault production values
+# Chart: hashicorp/vault 0.32.0 (Vault 1.21.2)
+global:
+  enabled: true
+  tlsDisable: false
+
+injector:
+  enabled: false
+
+server:
+  image:
+    repository: hashicorp/vault
+    tag: 1.21.2
+    pullPolicy: IfNotPresent
+
+  statefulSet:
+    securityContext:
+      pod:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      container:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  extraVolumes:
+    - type: secret
+      name: vault-server-tls
+
+  readinessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true
+  livenessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+    initialDelaySeconds: 60
+
+  dataStorage:
+    enabled: true
+    size: 20Gi
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+
+  auditStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
+  standalone:
+    enabled: false
+
+  ha:
+    enabled: true
+    replicas: 3
+    apiAddr: https://vault-active.vault.svc.cluster.local:8200
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |-
+        ui = true
+        disable_mlock = true
+
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_disable = 0
+          tls_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+          tls_key_file = "/vault/userconfig/vault-server-tls/tls.key"
+          tls_client_ca_file = "/vault/userconfig/vault-server-tls/ca.crt"
+          telemetry {
+            unauthenticated_metrics_access = "true"
+          }
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+          retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-server-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-server-tls/tls.key"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-server-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-server-tls/tls.key"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_ca_cert_file = "/vault/userconfig/vault-server-tls/ca.crt"
+            leader_client_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-server-tls/tls.key"
+          }
+        }
+
+        service_registration "kubernetes" {}
+
+        telemetry {
+          prometheus_retention_time = "30s"
+          disable_hostname = true
+        }
+    disruptionBudget:
+      enabled: true
+      maxUnavailable: 1
+
+ui:
+  enabled: true
+  serviceType: ClusterIP
+
+serverTelemetry:
+  serviceMonitor:
+    enabled: true
+    selectors:
+      release: kube-prometheus-stack
+    tlsConfig:
+      ca:
+        secret:
+          name: vault-server-tls
+          key: ca.crt
+      serverName: vault-active.vault.svc.cluster.local

@@ -1,0 +1,24 @@
+# This non-sensitive leaf certificate provides the internal issuer's ca.crt
+# declaratively in the namespace where VaultConnection expects it.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vault-ca-trust
+  namespace: vault-secrets-operator-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  secretName: vault-ca
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  issuerRef:
+    name: k8s-internal-ca
+    kind: ClusterIssuer
+  usages:
+    - client auth
+  dnsNames:
+    - vault-ca-trust.vault-secrets-operator-system.svc

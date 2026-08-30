@@ -4,7 +4,7 @@
 > **Component:** Vault Secrets Operator (VSO) & HashiCorp Vault Integration  
 > **Target Secret:** `grafana-admin-credentials` (`monitoring` namespace)  
 > **Chart:** `hashicorp/vault-secrets-operator` `0.9.1`  
-> **Vault Endpoint:** `https://vault.k8s.tss.local:8200`  
+> **Vault Endpoint:** `https://vault.k8s.tss.local`
 > **Vault Secret Path:** `kv/data/monitoring/grafana`  
 > **GitOps Controller:** Argo CD  
 > **Repository:** `https://github.com/SattyaPiseth/gitops-platform.git`  
@@ -76,7 +76,7 @@ Vault
 | [`clusters/production/argocd/applications/vault-secrets-operator.yaml`](file:///opt/gitops-platform/clusters/production/argocd/applications/vault-secrets-operator.yaml) | Argo CD Application deploying VSO into `vault-secrets-operator-system`. |
 | [`helm-values/vault-secrets-operator/values.yaml`](file:///opt/gitops-platform/helm-values/vault-secrets-operator/values.yaml) | Production Helm values (replicas, resource requests/limits, telemetry). |
 | [`clusters/production/argocd/resources/vault-secrets-operator/namespace.yaml`](file:///opt/gitops-platform/clusters/production/argocd/resources/vault-secrets-operator/namespace.yaml) | Namespace `vault-secrets-operator-system`. |
-| [`clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml`](file:///opt/gitops-platform/clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml) | `VaultConnection` CR pointing to `https://vault.k8s.tss.local:8200`. |
+| [`clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml`](file:///opt/gitops-platform/clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml) | `VaultConnection` CR pointing to the internal HA service `https://vault-active.vault.svc.cluster.local:8200`. |
 | [`clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-auth.yaml`](file:///opt/gitops-platform/clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-auth.yaml) | ServiceAccount & `VaultAuth` CR for `monitoring:grafana-vault-auth`. |
 | [`clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-static-secret.yaml`](file:///opt/gitops-platform/clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-static-secret.yaml) | `VaultStaticSecret` CR creating `Secret/grafana-admin-credentials`. |
 | [`helm-values/kube-prometheus-stack/values.yaml`](file:///opt/gitops-platform/helm-values/kube-prometheus-stack/values.yaml) | Grafana Helm values referencing `existingSecret: grafana-admin-credentials`. |
@@ -90,7 +90,7 @@ Execute the following commands on your HashiCorp Vault server (via Vault CLI or 
 ### Step 1: Enable the KV v2 Secret Engine
 If KV v2 is not already mounted at `kv`:
 ```bash
-export VAULT_ADDR="https://vault.k8s.tss.local:8200"
+export VAULT_ADDR="https://vault.k8s.tss.local"
 
 # Enable KV v2 secret engine at path 'kv'
 vault secrets enable -path=kv kv-v2

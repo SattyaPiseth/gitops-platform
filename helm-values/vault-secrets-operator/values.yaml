@@ -3,15 +3,16 @@
 # Namespace: vault-secrets-operator-system
 
 controller:
-  replicaCount: 2
+  replicas: 2
 
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+  manager:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   securityContext:
     allowPrivilegeEscalation: false
@@ -20,13 +21,13 @@ controller:
       drop:
         - ALL
 
-podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 65532
-  runAsGroup: 65532
-  fsGroup: 65532
-  seccompProfile:
-    type: RuntimeDefault
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
 
 telemetry:
   serviceMonitor:

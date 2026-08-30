@@ -2,7 +2,7 @@
 
 > **Status:** Production Secrets Baseline  
 > **Target Namespace:** `gitlab`  
-> **Secret Authority:** HashiCorp Vault (`https://vault.k8s.tss.local:8200`)  
+> **Secret Authority:** HashiCorp Vault (`https://vault.k8s.tss.local`)
 > **Synchronization Layer:** Vault Secrets Operator (VSO)  
 > **GitOps Controller:** Argo CD (`platform/gitlab`)  
 

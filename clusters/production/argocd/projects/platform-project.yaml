@@ -32,6 +32,8 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: vault-secrets-operator-system
     - server: https://kubernetes.default.svc
+      namespace: vault
+    - server: https://kubernetes.default.svc
       namespace: argocd
 
   clusterResourceWhitelist:
