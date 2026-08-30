@@ -77,6 +77,7 @@ s3:
   bucket: gitlab-registry
   secure: true
   v4auth: true
+  pathstyle: true
   rootdirectory: /
   chunksize: 5242880
 ```
@@ -90,17 +91,18 @@ Used by the GitLab Toolbox pod to upload and download full system backups (`gitl
 ### Kubernetes Secret Specification
 * **Secret Name:** `gitlab-backup-object-storage`
 * **Secret Key:** `config`
-* **Format:** YAML (s3cmd / Fog backup format)
+* **Format:** INI (`s3cmd` configuration)
 * **Vault Source Path:** `kv/data/gitlab/object-storage/backup`
 
 ### Connection Configuration Format (`config`)
-```yaml
+```ini
 [default]
 access_key = <BACKUP_S3_ACCESS_KEY>
 secret_key = <BACKUP_S3_SECRET_KEY>
 bucket_location = us-east-1
 host_base = s3.k8s.tss.local
-host_bucket = s3.k8s.tss.local/%(bucket)
+# Path-style S3 endpoint; s3cmd appends the bucket to the request path.
+host_bucket = s3.k8s.tss.local
 use_https = True
 signature_v2 = False
 ```

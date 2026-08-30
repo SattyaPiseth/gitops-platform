@@ -242,6 +242,7 @@ vault kv put kv/gitlab/object-storage/registry config="s3:
   bucket: gitlab-registry
   secure: true
   v4auth: true
+  pathstyle: true
   rootdirectory: /
   chunksize: 5242880"
 
@@ -251,7 +252,7 @@ access_key = <BACKUP_S3_ACCESS_KEY>
 secret_key = <BACKUP_S3_SECRET_KEY>
 bucket_location = us-east-1
 host_base = s3.k8s.tss.local
-host_bucket = s3.k8s.tss.local/%(bucket)
+host_bucket = s3.k8s.tss.local
 use_https = True
 signature_v2 = False"
 
@@ -319,4 +320,3 @@ kv/data/
   └── cnpg/cluster-superuser      ──> Secret/cnpg-superuser-creds (cnpg-system)
 ```
 Each workload simply defines its own `ServiceAccount`, `VaultAuth` (scoped to its own Vault role), and `VaultStaticSecret`.
-

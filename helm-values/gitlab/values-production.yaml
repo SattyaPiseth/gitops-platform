@@ -66,6 +66,15 @@ global:
     dependencyProxy:
       bucket: gitlab-dependency-proxy
 
+    backups:
+      bucket: gitlab-backups
+      tmpBucket: gitlab-backup-tmp
+
+  # The Registry chart reads its storage configuration from the dedicated
+  # Secret below, while GitLab backup/restore needs the bucket name globally.
+  registry:
+    bucket: gitlab-registry
+
 
 #
 # Registry object storage
