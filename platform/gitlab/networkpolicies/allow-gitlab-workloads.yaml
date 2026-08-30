@@ -16,6 +16,18 @@ spec:
     # Allow intra-namespace traffic between GitLab pods
     - from:
         - podSelector: {}
+    # Allow the CNPG operator to query the instance-manager status endpoint.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+      ports:
+        - protocol: TCP
+          port: 8000
+
   egress:
     # Allow intra-namespace traffic between GitLab pods
     - to:
