@@ -7,7 +7,9 @@ defaultSettings:
   defaultDataPath: /var/lib/longhorn
   defaultDataLocality: best-effort
   allowVolumeCreationWithDegradedAvailability: "false"
-  storageOverProvisioningPercentage: 100
+  # V1 sparse volumes currently consume less than 3% of physical capacity.
+  # Keep the 25% physical-free guard while allowing controlled thin provisioning.
+  storageOverProvisioningPercentage: 150
   storageMinimalAvailablePercentage: 25
   replicaSoftAntiAffinity: "false"
   priorityClass: longhorn-critical
@@ -22,3 +24,11 @@ csi:
   provisionerReplicaCount: 2
   resizerReplicaCount: 2
   snapshotterReplicaCount: 2
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+    interval: 30s
+    scrapeTimeout: 10s

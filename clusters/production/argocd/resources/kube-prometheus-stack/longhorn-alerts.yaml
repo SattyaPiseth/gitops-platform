@@ -1,0 +1,108 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn-storage
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: longhorn
+    app.kubernetes.io/managed-by: argocd
+spec:
+  groups:
+    - name: longhorn.storage
+      rules:
+        - alert: LonghornNodePhysicalUsageWarning
+          expr: |
+            100 * longhorn_node_storage_usage_bytes
+              / longhorn_node_storage_capacity_bytes > 70
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn physical storage usage is above 70%
+            description: >-
+              Longhorn storage on {{ $labels.node }} has used
+              {{ $value | printf "%.1f" }}% of its physical disk for 15 minutes.
+
+        - alert: LonghornNodePhysicalUsageCritical
+          expr: |
+            100 * longhorn_node_storage_usage_bytes
+              / longhorn_node_storage_capacity_bytes > 80
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn physical storage usage is above 80%
+            description: >-
+              Longhorn storage on {{ $labels.node }} has used
+              {{ $value | printf "%.1f" }}% of its physical disk for 5 minutes.
+
+        - alert: LonghornNodeScheduledCapacityWarning
+          expr: |
+            100 * longhorn_node_storage_scheduled_bytes
+              / (
+                (longhorn_node_storage_capacity_bytes
+                  - longhorn_node_storage_reservation_bytes) * 1.5
+              ) > 80
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn scheduled capacity exceeds 80% of its configured ceiling
+            description: >-
+              Longhorn scheduled capacity on {{ $labels.node }} is
+              {{ $value | printf "%.1f" }}% of the 150% scheduling ceiling.
+
+        - alert: LonghornNodeScheduledCapacityCritical
+          expr: |
+            100 * longhorn_node_storage_scheduled_bytes
+              / (
+                (longhorn_node_storage_capacity_bytes
+                  - longhorn_node_storage_reservation_bytes) * 1.5
+              ) > 90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn scheduled capacity exceeds 90% of its configured ceiling
+            description: >-
+              Longhorn scheduled capacity on {{ $labels.node }} is
+              {{ $value | printf "%.1f" }}% of the 150% scheduling ceiling.
+
+        - alert: LonghornVolumeUsageWarning
+          expr: |
+            100 * longhorn_volume_actual_size_bytes
+              / longhorn_volume_capacity_bytes > 80
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn volume physical usage is above 80%
+            description: >-
+              PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is
+              {{ $value | printf "%.1f" }}% full.
+
+        - alert: LonghornVolumeUsageCritical
+          expr: |
+            100 * longhorn_volume_actual_size_bytes
+              / longhorn_volume_capacity_bytes > 90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume physical usage is above 90%
+            description: >-
+              PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is
+              {{ $value | printf "%.1f" }}% full.
+
+        - alert: LonghornVolumeNotHealthy
+          expr: |
+            longhorn_volume_robustness{state=~"degraded|faulted"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume is not healthy
+            description: >-
+              PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is
+              {{ $labels.state }} on {{ $labels.node }}.
