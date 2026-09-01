@@ -1,0 +1,16 @@
+---
+extends: default
+
+# This file is vendored from the upstream Prometheus chart and is validated by
+# kubeconform instead of being reformatted locally.
+ignore: |
+  clusters/production/argocd/resources/kube-prometheus-stack-crds/crds.yaml
+
+rules:
+  document-start: disable
+  line-length: disable
+  truthy:
+    allowed-values:
+      - "true"
+      - "false"
+    check-keys: false

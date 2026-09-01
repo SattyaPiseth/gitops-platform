@@ -10,18 +10,18 @@ spec:
   ingressClassName: traefik
 
   tls:
-  - hosts:
-    - headlamp.k8s.tss.local
-    secretName: headlamp-tls
+    - hosts:
+        - headlamp.k8s.tss.local
+      secretName: headlamp-tls
 
   rules:
-  - host: headlamp.k8s.tss.local
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: headlamp
-            port: 
-              number: 80
+    - host: headlamp.k8s.tss.local
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: headlamp
+                port:
+                  number: 80

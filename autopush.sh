@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 
 
@@ -31,10 +31,18 @@ usage() {
 while [[ $# -gt 0 ]]; do
   case $1 in
     -r|--remote)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for $1." >&2
+        exit 2
+      fi
       REMOTE="$2"
       shift 2
       ;;
     -b|--branch)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for $1." >&2
+        exit 2
+      fi
       BRANCH="$2"
       shift 2
       ;;
@@ -60,18 +68,44 @@ if [[ -z "$COMMIT_MSG" ]]; then
 fi
 
 # Auto pull if requested
+if [[ "$REMOTE" == -* || "$BRANCH" == -* ]]; then
+  echo "Remote and branch names must not begin with '-'." >&2
+  exit 2
+fi
+
+if ! git remote get-url "$REMOTE" >/dev/null 2>&1; then
+  echo "Git remote '$REMOTE' does not exist." >&2
+  exit 2
+fi
+
 if $AUTO_PULL; then
   echo "Pulling latest changes from $REMOTE/$BRANCH..."
-  git pull "$REMOTE" "$BRANCH"
+  git pull --rebase "$REMOTE" "$BRANCH"
 fi
 
 echo "Adding all changes..."
-git add -A
+echo "Checking worktree patches..."
+git diff --check
+
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "Scanning worktree for secrets..."
+  gitleaks dir . --no-banner --redact
+fi
+
+git add --all
+
+echo "Checking staged patches..."
+git diff --cached --check
+
+if git diff --cached --quiet; then
+  echo "Nothing to commit."
+  exit 0
+fi
 
 echo "Committing with message: $COMMIT_MSG"
-git commit -m "$COMMIT_MSG" || echo "Nothing to commit."
+git commit -m "$COMMIT_MSG"
 
 echo "Pushing to $REMOTE $BRANCH..."
-git push "$REMOTE" "$BRANCH"
+git push -- "$REMOTE" "$BRANCH"
 
 echo "Push complete."

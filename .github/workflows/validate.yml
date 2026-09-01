@@ -1,0 +1,71 @@
+---
+name: Validate GitOps
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install YAML and shell validation tools
+        run: |
+          python -m pip install yamllint==1.38.0
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+
+      - name: Lint tracked YAML
+        run: |
+          git ls-files -z '*.yaml' '*.yml' |
+            xargs -0 --no-run-if-empty yamllint
+
+      - name: Reject disabled manifests in Argo discovery
+        run: |
+          invalid_files="$(find clusters/production/argocd/applications \
+            -maxdepth 1 -type f ! -name '*.yaml' ! -name '*.yml' -print)"
+          if [ -n "$invalid_files" ]; then
+            printf 'Unsupported files in the Argo application directory:\n%s\n' \
+              "$invalid_files"
+            exit 1
+          fi
+
+      - name: Validate shell scripts
+        run: shellcheck autopush.sh
+
+      - name: Validate Kubernetes schemas
+        run: |
+          docker run --rm --volume "$PWD:/work:ro" \
+            ghcr.io/yannh/kubeconform:v0.8.0 \
+            -strict -summary -ignore-missing-schemas \
+            /work/clusters /work/platform
+
+      - name: Scan Git history for secrets
+        run: |
+          docker run --rm --volume "$PWD:/repo:ro" \
+            ghcr.io/gitleaks/gitleaks:v8.30.0 \
+            detect --source=/repo --no-banner --redact

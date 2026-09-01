@@ -1,0 +1,3 @@
+# Documentation uses the literal placeholder admin:<PASSWORD>; this is not a
+# credential. Keep the exception scoped to the original finding fingerprint.
+bd8663b3c86c78c40e1b4995014d05da260d6997:docs/gitlab/deployment-validation-guide.md:curl-auth-user:37

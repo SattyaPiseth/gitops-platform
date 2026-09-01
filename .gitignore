@@ -1,0 +1,31 @@
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.kubeconfig
+kubeconfig
+
+# Kubernetes and secret-rendering output
+*.secret.yaml
+*.secrets.yaml
+rendered/
+.generated/
+
+# Tool and editor state
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.bak
+*~
+
+# Local validation tools and reports
+.cache/
+bin/
+coverage/
+reports/
+*.log
