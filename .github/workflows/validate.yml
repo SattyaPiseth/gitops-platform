@@ -31,7 +31,6 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          cache: pip
 
       - name: Install YAML and shell validation tools
         run: |
