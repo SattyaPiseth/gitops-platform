@@ -27,6 +27,14 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
 
+  # Argo CD v2.14's static schema predates the Kubernetes v1.35 field.
+  # TODO: Remove after upgrading Argo CD to a Kubernetes v1.35-compatible release.
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /status/terminatingReplicas
+
   syncPolicy:
     automated:
       prune: true
