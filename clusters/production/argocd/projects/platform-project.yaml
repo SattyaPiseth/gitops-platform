@@ -16,8 +16,6 @@ spec:
     - https://postfinance.github.io/kubelet-csr-approver
     - https://traefik.github.io/charts
     - https://helm.releases.hashicorp.com
-    - https://ot-container-kit.github.io/helm-charts
-    - https://operator.min.io
     - https://github.com/SattyaPiseth/gitops-platform.git
 
   destinations:
@@ -39,12 +37,6 @@ spec:
       namespace: vault
     - server: https://kubernetes.default.svc
       namespace: argocd
-    - server: https://kubernetes.default.svc
-      namespace: redis-operator
-    - server: https://kubernetes.default.svc
-      namespace: minio-operator
-    - server: https://kubernetes.default.svc
-      namespace: minio-system
 
   clusterResourceWhitelist:
     - group: ""
