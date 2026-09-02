@@ -8,13 +8,19 @@ metadata:
 spec:
   project: platform
 
-  source:
-    repoURL: https://github.com/SattyaPiseth/gitops-platform.git
-    targetRevision: main
-    path: clusters/production/argocd/applications
-    directory:
-      recurse: false
-      exclude: 'root-applications.yaml'
+  sources:
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      path: clusters/production/argocd/applications
+      directory:
+        recurse: false
+        exclude: 'root-applications.yaml'
+
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      path: clusters/production/argocd/projects
+      directory:
+        recurse: false
 
   destination:
     server: https://kubernetes.default.svc
