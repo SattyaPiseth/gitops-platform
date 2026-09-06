@@ -5,6 +5,12 @@ metadata:
   namespace: gitlab
 spec:
   secretName: gitlab-registry-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
 
   issuerRef:
     name: k8s-internal-ca
