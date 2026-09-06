@@ -1,6 +1,22 @@
 global:
   edition: ce
 
+  # Trust the internal CA used by MinIO and other platform services. Project
+  # only the public CA key; never mount the TLS private key into GitLab pods.
+  certificates:
+    customCAs:
+      - secret: gitlab-tls
+        keys:
+          - ca.crt
+
+  # Use fully-qualified Service DNS names and avoid redundant search-domain
+  # lookups for external endpoints such as s3.k8s.tss.local.
+  clusterDomain: cluster.local
+  dnsConfig:
+    options:
+      - name: ndots
+        value: "2"
+
   hosts:
     domain: k8s.tss.local
 
@@ -77,6 +93,7 @@ traefik:
 gitlab:
   webservice:
     minReplicas: 2
+    maxReplicas: 3
 
     ingress:
       tls:
@@ -84,14 +101,19 @@ gitlab:
 
   sidekiq:
     minReplicas: 2
+    maxReplicas: 3
 
   kas:
+    minReplicas: 2
+    maxReplicas: 3
+
     ingress:
       tls:
         secretName: gitlab-kas-tls
 
   gitlab-shell:
     minReplicas: 2
+    maxReplicas: 3
 
     traefik:
       ingressClassName: traefik
@@ -100,8 +122,22 @@ gitlab:
   toolbox:
     replicas: 1
 
+  gitaly:
+    persistence:
+      storageClass: longhorn
+      size: 50Gi
+
 
 registry:
+  hpa:
+    minReplicas: 2
+    maxReplicas: 3
+
   ingress:
     tls:
       secretName: gitlab-registry-tls
+
+# A separately managed Runner release consumes the Vault-provided
+# gitlab-runner-secret. Do not install the parent chart's bundled Runner.
+gitlab-runner:
+  install: false
