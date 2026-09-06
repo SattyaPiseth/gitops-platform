@@ -51,5 +51,5 @@ spec:
       templates:
         config.env:
           text: |
-            {{- printf "export MINIO_ROOT_USER='%s'\nexport MINIO_ROOT_PASSWORD='%s'\n" (get .Secrets "root-user") (get .Secrets "root-password") -}}
+            {{- printf "export MINIO_ROOT_USER=%s\nexport MINIO_ROOT_PASSWORD=%s\n" (get .Secrets "root-user") (get .Secrets "root-password") -}}
   refreshAfter: 5m

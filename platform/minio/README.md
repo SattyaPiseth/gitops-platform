@@ -74,9 +74,9 @@ vault kv put kv/minio/root \
 unset MINIO_ROOT_PASSWORD
 ```
 
-Use a generated password containing only URL-safe characters and no single
-quote. The VSO template deliberately single-quotes the value in `config.env`
-so shell metacharacters are not expanded by MinIO's environment-file parser.
+Use a generated password containing only URL-safe ASCII characters, without
+whitespace or quotes. The VSO template writes these values without shell quoting
+in `config.env`, so spaces, quotes, and shell metacharacters are not supported.
 
 ## Pre-sync checks
 
