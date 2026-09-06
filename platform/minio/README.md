@@ -9,11 +9,12 @@ and is not an independent disaster-recovery copy.
 
 - Argo CD installs the pinned MinIO Operator and then the Tenant chart at
   version `7.1.1`.
-- cert-manager issues one internal-CA certificate for both the public S3 name
-  and the Tenant's internal service names. Traefik validates that certificate
-  on the backend connection; TLS is not terminated and then downgraded.
-- Traefik exposes only the S3 API at `https://s3.k8s.tss.local`. The MinIO
-  Console and direct LoadBalancer services remain disabled.
+- cert-manager issues one internal-CA certificate for the public S3 and Console
+  names plus the Tenant's internal service names.
+- Traefik uses TCP SNI routing with TLS passthrough. MinIO terminates TLS and
+  presents its certificate directly to clients; no verification bypass is enabled.
+- Traefik exposes the S3 API at `https://s3.k8s.tss.local` and the Console at
+  `https://minio.k8s.tss.local`. Direct LoadBalancer services remain disabled.
 - The initial distributed pool has four servers, one 25 GiB PVC per server,
   and approximately 100 GiB raw capacity. Erasure-code parity means usable
   capacity is materially lower (normally about 50 GiB for this four-drive
@@ -24,10 +25,16 @@ and is not an independent disaster-recovery copy.
 - Four MinIO pods share three storage workers, so one worker must host two
   pods. This cannot meet a strict one-server-per-failure-domain design.
 
-The DNS record already points at the Traefik VIP `172.16.6.200`. Until the
-Tenant and IngressRoute are synced, clients may receive Traefik's default
-certificate or a routing error; that is expected and does not indicate that
-MinIO is installed.
+The S3 and Console DNS records point at the Traefik VIP `172.16.6.200`. Until
+the Tenant and `IngressRouteTCP` resources are synced, clients may receive a
+routing or connection error; that is expected and does not indicate that MinIO
+is installed.
+
+See [Traefik routing and backend transport concepts](../../docs/traefik-routing-core-concepts.md)
+for the routing, TLS, and troubleshooting model used here.
+
+The Console is an administrative endpoint. Keep its DNS name and Traefik VIP
+limited to trusted management networks; do not expose it to the public Internet.
 
 ## Deployment order
 
@@ -109,6 +116,8 @@ kubectl get secret minio-server-tls -n minio-system \
   -o jsonpath='{.data.ca\.crt}' | base64 -d > /tmp/minio-ca.crt
 curl --fail --show-error --cacert /tmp/minio-ca.crt \
   https://s3.k8s.tss.local/minio/health/cluster
+curl --fail --show-error --cacert /tmp/minio-ca.crt \
+  https://minio.k8s.tss.local/
 kubectl get servicemonitor,prometheusrule -n minio-system
 ```
 
