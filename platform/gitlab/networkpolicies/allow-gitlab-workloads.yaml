@@ -59,6 +59,18 @@ spec:
         - protocol: TCP
           port: 6443
 
+    # MinIO S3 API. Service traffic is enforced after DNAT on pod port 9000.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: minio-system
+          podSelector:
+            matchLabels:
+              v1.min.io/tenant: minio
+      ports:
+        - protocol: TCP
+          port: 9000
+
     # HTTPS remains destination-open until S3 and approved external API CIDRs
     # are inventoried; Kubernetes NetworkPolicy cannot select DNS names.
     - ports:
