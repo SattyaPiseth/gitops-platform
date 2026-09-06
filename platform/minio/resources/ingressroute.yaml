@@ -1,21 +1,5 @@
 apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: minio-internal-tls
-  namespace: minio-system
-  labels:
-    app.kubernetes.io/part-of: object-storage
-    app.kubernetes.io/managed-by: argocd
-spec:
-  serverName: minio.minio-system.svc.cluster.local
-  insecureSkipVerify: false
-  minVersion: VersionTLS12
-  rootCAs:
-    - secret: minio-server-tls
-
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: minio-s3
   namespace: minio-system
@@ -26,21 +10,16 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - kind: Rule
-      match: Host(`s3.k8s.tss.local`)
+    - match: HostSNI(`s3.k8s.tss.local`)
       services:
-        - kind: Service
-          name: minio
+        - name: minio
           port: 443
-          scheme: https
-          passHostHeader: true
-          serversTransport: minio-internal-tls@kubernetescrd
   tls:
-    secretName: minio-server-tls
+    passthrough: true
 
 ---
 apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: minio-console
   namespace: minio-system
@@ -51,14 +30,9 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - kind: Rule
-      match: Host(`minio.k8s.tss.local`)
+    - match: HostSNI(`minio.k8s.tss.local`)
       services:
-        - kind: Service
-          name: minio-console
+        - name: minio-console
           port: 9443
-          scheme: https
-          passHostHeader: true
-          serversTransport: minio-internal-tls@kubernetescrd
   tls:
-    secretName: minio-server-tls
+    passthrough: true
