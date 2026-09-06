@@ -1,0 +1,109 @@
+# Dedicated CA and leaf certificates for the GitLab PostgreSQL cluster.
+# CloudNativePG reloads Secrets carrying cnpg.io/reload without pod deletion.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: gitlab-postgresql-selfsigned
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  selfSigned: {}
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gitlab-postgresql-tls-ca
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  secretName: gitlab-postgresql-tls-ca
+  commonName: gitlab-postgresql-tls-ca
+  isCA: true
+  duration: 43800h
+  renewBefore: 4320h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  issuerRef:
+    name: gitlab-postgresql-selfsigned
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: gitlab-postgresql-tls-ca
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  ca:
+    secretName: gitlab-postgresql-tls-ca
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gitlab-postgresql-server-tls
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  secretName: gitlab-postgresql-server-tls
+  duration: 2160h
+  renewBefore: 360h
+  secretTemplate:
+    labels:
+      cnpg.io/reload: ""
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - server auth
+  dnsNames:
+    - gitlab-postgresql-rw
+    - gitlab-postgresql-rw.gitlab
+    - gitlab-postgresql-rw.gitlab.svc
+    - gitlab-postgresql-rw.gitlab.svc.cluster.local
+    - gitlab-postgresql-r
+    - gitlab-postgresql-r.gitlab
+    - gitlab-postgresql-r.gitlab.svc
+    - gitlab-postgresql-r.gitlab.svc.cluster.local
+    - gitlab-postgresql-ro
+    - gitlab-postgresql-ro.gitlab
+    - gitlab-postgresql-ro.gitlab.svc
+    - gitlab-postgresql-ro.gitlab.svc.cluster.local
+  issuerRef:
+    name: gitlab-postgresql-tls-ca
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gitlab-postgresql-replication-tls
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  secretName: gitlab-postgresql-replication-tls
+  commonName: streaming_replica
+  duration: 2160h
+  renewBefore: 360h
+  secretTemplate:
+    labels:
+      cnpg.io/reload: ""
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - client auth
+  issuerRef:
+    name: gitlab-postgresql-tls-ca
+    kind: Issuer

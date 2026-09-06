@@ -29,6 +29,12 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS btree_gist;
         - CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+  certificates:
+    serverCASecret: gitlab-postgresql-tls-ca
+    serverTLSSecret: gitlab-postgresql-server-tls
+    clientCASecret: gitlab-postgresql-tls-ca
+    replicationTLSSecret: gitlab-postgresql-replication-tls
+
   storage:
     storageClass: longhorn
     size: 50Gi
