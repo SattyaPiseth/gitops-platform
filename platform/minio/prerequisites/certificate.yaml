@@ -18,6 +18,7 @@ spec:
     - server auth
   dnsNames:
     - s3.k8s.tss.local
+    - minio.k8s.tss.local
     - minio
     - minio.minio-system
     - minio.minio-system.svc
