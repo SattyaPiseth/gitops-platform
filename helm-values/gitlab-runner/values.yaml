@@ -4,8 +4,25 @@
 
 gitlabUrl: https://gitlab.k8s.tss.local/
 
-# Use existing TLS secret for internal CA validation
-certsSecretName: gitlab-tls
+# Trust the cert-manager CA using Runner's required hostname filename.
+volumeMounts:
+  - name: gitlab-runner-ca
+    mountPath: /home/gitlab-runner/.gitlab-runner/certs/
+    readOnly: true
+
+volumes:
+  - name: gitlab-runner-ca
+    secret:
+      secretName: gitlab-tls
+      items:
+        - key: ca.crt
+          path: gitlab.k8s.tss.local.crt
+
+# Preserve the public TLS hostname while avoiding MetalLB hairpin traffic.
+hostAliases:
+  - ip: "10.233.57.145"
+    hostnames:
+      - gitlab.k8s.tss.local
 
 # Number of concurrent jobs to run
 concurrent: 10
@@ -30,6 +47,7 @@ runners:
   # Executor configuration
   config: |
     [[runners]]
+      request_concurrency = 2
       [runners.kubernetes]
         namespace = "gitlab"
         image = "ubuntu:24.04"
@@ -44,6 +62,9 @@ runners:
         service_memory_limit = "2Gi"
         poll_interval = 5
         poll_timeout = 3600
+        [[runners.kubernetes.host_aliases]]
+          ip = "10.233.57.145"
+          hostnames = ["gitlab.k8s.tss.local"]
 
 resources:
   requests:

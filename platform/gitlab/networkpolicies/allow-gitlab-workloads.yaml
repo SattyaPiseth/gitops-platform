@@ -71,6 +71,19 @@ spec:
         - protocol: TCP
           port: 9000
 
+    # Internal HTTPS ingress path. Service port 443 is DNATed to Traefik
+    # container port 8443 before NetworkPolicy enforcement.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8443
+
     # HTTPS remains destination-open until S3 and approved external API CIDRs
     # are inventoried; Kubernetes NetworkPolicy cannot select DNS names.
     - ports:
