@@ -94,3 +94,30 @@ spec:
     - ports:
         - protocol: TCP
           port: 22
+
+---
+# Brevo publishes DNS names rather than stable destination CIDRs, so this
+# rule limits access by source workload and SMTP submission port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-smtp-egress
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - sidekiq
+          - toolbox
+          - webservice
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 587

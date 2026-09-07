@@ -25,6 +25,7 @@ The actual passwords, API tokens, and secret access keys live exclusively inside
 * Container Registry S3 access and secret keys
 * Backup S3 access and secret keys
 * GitLab Runner authentication token
+* Brevo SMTP login and SMTP key
 
 ---
 
@@ -74,6 +75,7 @@ GitLab CE & GitLab Runner
 | `gitlab-registry-storage`| `config` | Docker Registry S3 YAML block | `kv/data/gitlab/object-storage/registry`| Container Registry |
 | `gitlab-backup-object-storage` | `config` | Backup s3cmd configuration block | `kv/data/gitlab/object-storage/backup` | Toolbox Backup Utility |
 | `gitlab-runner-secret` | `runner-token` | Runner registration/auth token | `kv/data/gitlab-runner/auth` | GitLab Runner Manager |
+| `gitlab-smtp` | `username`, `password` | Brevo SMTP login and dedicated SMTP key | `kv/data/gitlab/smtp` | Webservice, Sidekiq, Toolbox |
 
 ---
 
@@ -86,9 +88,10 @@ GitLab CE Platform
   │
   ├── ServiceAccount: gitlab:gitlab-vault-auth
   ├── Vault Role:     gitlab-platform
-  └── Vault Policy:   gitlab-platform-read
+  └── Vault Policy:   gitlab-platform
                       ├── kv/data/gitlab/postgresql
                       ├── kv/data/gitlab/redis
+                      ├── kv/data/gitlab/smtp
                       └── kv/data/gitlab/object-storage/*
 
 GitLab Runner
@@ -103,7 +106,51 @@ GitLab Runner
 
 ---
 
-## 5. Definition of "Ready" Checklist
+## 5. Brevo SMTP Bootstrap and Rollout
+
+1. Add and verify the sending domain `gitlab-mail.memora-shine.shop` in
+   Brevo. Publish the exact Brevo code, DKIM, and DMARC records supplied by
+   Brevo, then create the transactional sender
+   `gitlab@gitlab-mail.memora-shine.shop` before enabling email confirmation.
+2. Grant `gitlab-platform` read-only access to the SMTP secret:
+
+   ```hcl
+   path "kv/data/gitlab/smtp" {
+     capabilities = ["read"]
+   }
+   ```
+
+3. In Brevo **Settings > SMTP & API > SMTP**, copy the SMTP login and generate
+   a dedicated standard SMTP key. Do not use an API key or account password.
+4. Store both values in Vault without putting either one in shell history or
+   Git:
+
+   ```bash
+   kubectl exec -n vault -it vault-0 -- sh
+   export VAULT_ADDR=https://vault-active.vault.svc.cluster.local:8200
+   vault login
+   read -p "Brevo SMTP login: " BREVO_SMTP_LOGIN
+   read -s -p "Brevo SMTP key: " BREVO_SMTP_KEY
+   echo
+   vault kv put kv/gitlab/smtp \
+     username="$BREVO_SMTP_LOGIN" \
+     password="$BREVO_SMTP_KEY"
+   unset BREVO_SMTP_LOGIN BREVO_SMTP_KEY
+   ```
+
+5. Confirm `VaultStaticSecret/gitlab-smtp` is synced and the generated Secret
+   contains both expected key names. Do not print or decode their values.
+6. Sync `gitlab-prerequisites` first, then manually sync `gitlab`.
+7. Send a test message and confirm delivery in Brevo transactional logs.
+8. Only after successful delivery, enable **Hard** email confirmation in
+   **Admin > Settings > General > New user account restrictions**.
+
+Do not enable hard confirmation before the test succeeds; doing so can prevent
+new users from signing in while mail delivery is unavailable.
+
+---
+
+## 6. Definition of "Ready" Checklist
 
 Before proceeding to deploy GitLab CE:
 
@@ -112,4 +159,6 @@ Before proceeding to deploy GitLab CE:
 - [ ] **Object Storage**: All 10 buckets created in S3 backend; S3 credentials tested for Rails, Registry, and Backup.
 - [ ] **Vault**: KV v2 engine enabled; secrets populated under `kv/data/gitlab/*` and `kv/data/gitlab-runner/*`.
 - [ ] **Vault Policies & Roles**: `gitlab-platform` and `gitlab-runner` roles configured and bound to their respective Kubernetes ServiceAccounts.
-- [ ] **VSO Sync**: `VaultStaticSecret` CRDs synced; all 6 Kubernetes Secrets generated in `gitlab` namespace.
+- [ ] **Brevo**: Sending domain authenticated; DNS records pass; transactional sender exists; SMTP credentials are stored at `kv/gitlab/smtp`.
+- [ ] **VSO Sync**: `VaultStaticSecret` CRDs synced; all 7 Kubernetes Secrets generated in `gitlab` namespace.
+- [ ] **SMTP Test**: Test email delivered before hard email confirmation is enabled.

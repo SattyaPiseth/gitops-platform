@@ -62,6 +62,33 @@ global:
 
   revisionHistoryLimit: 5
 
+  # Transactional email is delivered through Brevo. Credentials are
+  # synchronized from Vault by platform/gitlab/vault.
+  smtp:
+    enabled: true
+    address: smtp-relay.brevo.com
+    port: 587
+    user_name_secret:
+      secret: gitlab-smtp
+      key: username
+    password:
+      secret: gitlab-smtp
+      key: password
+    domain: gitlab-mail.memora-shine.shop
+    authentication: plain
+    starttls_auto: true
+    tls: false
+    openssl_verify_mode: peer
+    pool: true
+    open_timeout: 30
+    read_timeout: 60
+
+  email:
+    from: gitlab@gitlab-mail.memora-shine.shop
+    display_name: GitLab
+    reply_to: noreply@gitlab-mail.memora-shine.shop
+    subject_suffix: ""
+
 # Disable only for initial Argo CD installation.
 upgradeCheck:
   enabled: false
