@@ -95,6 +95,14 @@ gitlab:
     minReplicas: 2
     maxReplicas: 3
 
+    # Avoid surge deadlocks on capacity-constrained worker nodes.
+    deployment:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
+
     ingress:
       tls:
         secretName: gitlab-tls
@@ -102,6 +110,14 @@ gitlab:
   sidekiq:
     minReplicas: 2
     maxReplicas: 3
+
+    # Keep one replica available while replacing pods without extra capacity.
+    deployment:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
 
   kas:
     minReplicas: 2
