@@ -12,7 +12,7 @@ spec:
     # Source 1: official GitLab Helm chart
     - repoURL: https://charts.gitlab.io/
       chart: gitlab-runner
-      targetRevision: 0.68.1
+      targetRevision: 0.91.3
       helm:
         releaseName: gitlab-runner
         valueFiles:

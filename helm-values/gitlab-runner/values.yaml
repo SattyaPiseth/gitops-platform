@@ -1,5 +1,5 @@
 # GitLab Runner Helm Values
-# Chart: gitlab/gitlab-runner (0.68.1)
+# Chart: gitlab/gitlab-runner (0.91.3)
 # Namespace: gitlab
 
 gitlabUrl: https://gitlab.k8s.tss.local/

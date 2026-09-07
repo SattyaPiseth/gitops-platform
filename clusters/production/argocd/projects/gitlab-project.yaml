@@ -52,3 +52,44 @@ spec:
       - group: ""
         kind: ConfigMap
         name: cnpg-default-monitoring
+
+      # Generated and rotated by the GitLab shared-secrets chart hook.
+      - group: ""
+        kind: Secret
+        name: gitlab-gitaly-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-initial-root-password
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-kas-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-runner-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-shell-host-keys
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-shell-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-gitlab-workhorse-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-kas-private-api
+      - group: ""
+        kind: Secret
+        name: gitlab-kas-websocket-token
+      - group: ""
+        kind: Secret
+        name: gitlab-rails-secret
+      - group: ""
+        kind: Secret
+        name: gitlab-registry-httpsecret
+      - group: ""
+        kind: Secret
+        name: gitlab-registry-notification
+      - group: ""
+        kind: Secret
+        name: gitlab-registry-secret
