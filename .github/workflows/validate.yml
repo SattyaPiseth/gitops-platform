@@ -63,6 +63,21 @@ jobs:
             -strict -summary -ignore-missing-schemas \
             /work/clusters /work/platform
 
+      - name: Validate Traefik GitLab Shell entrypoint
+        run: |
+          helm repo add traefik https://traefik.github.io/charts
+          helm template traefik traefik/traefik \
+            --version 41.3.0 \
+            --namespace traefik \
+            --values helm-values/traefik/values.yaml \
+            > "$RUNNER_TEMP/traefik-rendered.yaml"
+
+          grep --fixed-strings --quiet \
+            -- '--entryPoints.gitlab-shell.address=:2222/tcp' \
+            "$RUNNER_TEMP/traefik-rendered.yaml"
+          grep --fixed-strings --quiet 'name: gitlab-shell' \
+            "$RUNNER_TEMP/traefik-rendered.yaml"
+
       - name: Scan Git history for secrets
         run: |
           docker run --rm --volume "$PWD:/repo:ro" \

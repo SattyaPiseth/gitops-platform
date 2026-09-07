@@ -34,6 +34,16 @@ ports:
       tls:
         enabled: true
 
+  # Dedicated raw TCP entrypoint for GitLab Shell. The GitLab chart creates an
+  # IngressRouteTCP that targets this exact name; defining it here makes the
+  # Traefik listener and LoadBalancer Service port fully GitOps-managed.
+  gitlab-shell:
+    port: 2222
+    exposedPort: 22
+    expose:
+      default: true
+    protocol: TCP
+
   metrics:
     port: 9100
     exposedPort: 9100
