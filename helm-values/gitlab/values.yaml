@@ -95,6 +95,19 @@ gitlab:
     minReplicas: 2
     maxReplicas: 3
 
+    # Keep Rails workloads on worker/storage nodes and prefer an even spread.
+    # ScheduleAnyway preserves availability when this constrained cluster does
+    # not have enough spare capacity on every worker.
+    nodeSelector:
+      node-role.kubernetes.io/storage: "true"
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: webservice
+
     # Avoid surge deadlocks on capacity-constrained worker nodes.
     deployment:
       startupProbe:
@@ -103,7 +116,7 @@ gitlab:
           port: 8080
         periodSeconds: 10
         timeoutSeconds: 5
-        failureThreshold: 60
+        failureThreshold: 120
       strategy:
         type: RollingUpdate
         rollingUpdate:
@@ -117,6 +130,17 @@ gitlab:
   sidekiq:
     minReplicas: 2
     maxReplicas: 3
+
+    # Avoid concentrating memory-heavy Sidekiq replicas on one worker.
+    nodeSelector:
+      node-role.kubernetes.io/storage: "true"
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: sidekiq
 
     # Rails initialization exceeds the upstream 20-second liveness delay on
     # these workers. Readiness remains active while startup completes.
