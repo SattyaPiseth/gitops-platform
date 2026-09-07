@@ -27,6 +27,17 @@ spec:
       selfHeal: true
       prune: true
 
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
     syncOptions:
       - CreateNamespace=true
       - PruneLast=true
+      # Reconcile only actual drift. This avoids re-applying every healthy
+      # Certificate, Vault resource, and database prerequisite when a single
+      # NetworkPolicy changes.
+      - ApplyOutOfSyncOnly=true
