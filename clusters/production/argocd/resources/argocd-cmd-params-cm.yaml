@@ -1,0 +1,17 @@
+# Increase Git request timeout for argocd-repo-server.
+#
+# The default 15-second timeout is too short for intermittent outbound
+# network latency to GitHub, causing "context deadline exceeded" errors
+# during reconciliation.  60 seconds provides generous headroom without
+# stalling the sync loop when the remote is genuinely unreachable.
+#
+# The repo-server must be restarted after applying this ConfigMap:
+#   kubectl rollout restart deployment/argocd-repo-server -n argocd
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+data:
+  reposerver.git.request.timeout: "60s"
