@@ -97,6 +97,13 @@ gitlab:
 
     # Avoid surge deadlocks on capacity-constrained worker nodes.
     deployment:
+      startupProbe:
+        httpGet:
+          path: /-/liveness
+          port: 8080
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 60
       strategy:
         type: RollingUpdate
         rollingUpdate:
@@ -110,6 +117,15 @@ gitlab:
   sidekiq:
     minReplicas: 2
     maxReplicas: 3
+
+    # Rails initialization exceeds the upstream 20-second liveness delay on
+    # these workers. Readiness remains active while startup completes.
+    livenessProbe:
+      initialDelaySeconds: 600
+      periodSeconds: 60
+      timeoutSeconds: 30
+      successThreshold: 1
+      failureThreshold: 3
 
     # Keep one replica available while replacing pods without extra capacity.
     deployment:
