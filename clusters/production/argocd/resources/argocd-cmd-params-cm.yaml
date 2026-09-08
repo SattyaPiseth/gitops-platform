@@ -5,7 +5,8 @@
 # during reconciliation.  60 seconds provides generous headroom without
 # stalling the sync loop when the remote is genuinely unreachable.
 #
-# The repo-server must be restarted after applying this ConfigMap:
+# The application controller and repo-server must be restarted after applying:
+#   kubectl rollout restart statefulset/argocd-application-controller -n argocd
 #   kubectl rollout restart deployment/argocd-repo-server -n argocd
 
 apiVersion: v1
@@ -13,5 +14,16 @@ kind: ConfigMap
 metadata:
   name: argocd-cmd-params-cm
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 data:
+  # Keep reconciliation concurrency proportional to this small cluster.
+  controller.status.processors: "10"
+  controller.operation.processors: "5"
+  controller.kubectl.parallelism.limit: "10"
+  # Argo CD 2.14 defaults to persisting health for every managed resource;
+  # disabling it reduces Application writes and controller pressure.
+  controller.resource.health.persist: "false"
+  # Bound concurrent manifest generation to avoid burst contention.
+  reposerver.parallelism.limit: "2"
   reposerver.git.request.timeout: "60s"
