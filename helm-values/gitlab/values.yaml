@@ -62,11 +62,11 @@ global:
 
   revisionHistoryLimit: 5
 
-  # Transactional email is delivered through Brevo. Credentials are
+  # Transactional email is delivered through SMTP2GO. Credentials are
   # synchronized from Vault by platform/gitlab/vault.
   smtp:
     enabled: true
-    address: smtp-relay.brevo.com
+    address: mail.smtp2go.com
     port: 587
     user_name_secret:
       secret: gitlab-smtp

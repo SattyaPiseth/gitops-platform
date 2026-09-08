@@ -96,8 +96,8 @@ spec:
           port: 22
 
 ---
-# Brevo publishes DNS names rather than stable destination CIDRs, so this
-# rule limits access by source workload and SMTP submission port.
+# The external SMTP relay uses DNS names rather than stable destination CIDRs,
+# so this rule limits access by source workload and SMTP submission port.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
