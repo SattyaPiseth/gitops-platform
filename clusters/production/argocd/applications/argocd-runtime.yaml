@@ -12,19 +12,10 @@ spec:
     repoURL: https://github.com/SattyaPiseth/gitops-platform.git
     targetRevision: main
     path: clusters/production/argocd/resources
-    kustomize: {}
 
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
-
-  # Argo CD v2.14's static schema predates the Kubernetes v1.35 field.
-  # Remove after upgrading Argo CD to a compatible release.
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /status/terminatingReplicas
 
   syncPolicy:
     automated:

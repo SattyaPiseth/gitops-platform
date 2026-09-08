@@ -4,10 +4,20 @@ namespace: argocd
 
 # Pin the upstream base to prevent an implicit upgrade during reconciliation.
 resources:
-  - https://github.com/argoproj/argo-cd/manifests/cluster-install?ref=v2.14.5
+  - https://github.com/argoproj/argo-cd/manifests/cluster-install?ref=v3.3.14
 
 # Preserve only intentional local deviations from the upstream installation.
 patches:
+  # Retain label tracking for this upgrade. The repository uses
+  # ApplyOutOfSyncOnly, so annotation tracking must be migrated separately.
+  - target:
+      version: v1
+      kind: ConfigMap
+      name: argocd-cm
+    patch: |-
+      - op: add
+        path: /data/application.resourceTrackingMethod
+        value: label
   - target:
       version: v1
       kind: ConfigMap
