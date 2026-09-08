@@ -26,4 +26,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=false
-      - ApplyOutOfSyncOnly=true
+      # Required when Argo CD manages its own workloads and CRDs.
+      - ServerSideApply=true
