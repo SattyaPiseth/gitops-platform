@@ -79,15 +79,11 @@ global:
     starttls_auto: true
     tls: false
     openssl_verify_mode: peer
-    pool: true
-    open_timeout: 30
-    read_timeout: 60
 
   email:
     from: gitlab@gitlab-mail.memora-shine.shop
     display_name: GitLab
     reply_to: noreply@gitlab-mail.memora-shine.shop
-    subject_suffix: ""
 
 # Disable only for initial Argo CD installation.
 upgradeCheck:
@@ -204,6 +200,12 @@ gitlab:
 
   toolbox:
     replicas: 1
+    # Rails maintenance commands need substantially more capacity than the
+    # chart's minimal defaults on this shared, resource-constrained cluster.
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
 
   gitaly:
     persistence:
