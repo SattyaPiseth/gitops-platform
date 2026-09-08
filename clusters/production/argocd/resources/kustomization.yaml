@@ -8,8 +8,8 @@ resources:
 
 # Preserve only intentional local deviations from the upstream installation.
 patches:
-  # Retain label tracking for this upgrade. The repository uses
-  # ApplyOutOfSyncOnly, so annotation tracking must be migrated separately.
+  # Seed tracking annotations while retaining compatibility with existing labels.
+  # Switch to annotation-only after all managed resources have reconciled.
   - target:
       version: v1
       kind: ConfigMap
@@ -17,7 +17,7 @@ patches:
     patch: |-
       - op: add
         path: /data/application.resourceTrackingMethod
-        value: label
+        value: annotation+label
   - target:
       version: v1
       kind: ConfigMap
