@@ -33,6 +33,12 @@ if [[ -n "$invalid_files" ]]; then
   exit 1
 fi
 
+echo 'Checking documentation portability...'
+if git grep -n --fixed-strings 'file:///' -- '*.md'; then
+  echo 'Markdown must use repository-relative links, not local file URIs.' >&2
+  exit 1
+fi
+
 echo 'Linting shell scripts...'
 mapfile -d '' shell_scripts < <(git ls-files -z '*.sh')
 if ((${#shell_scripts[@]} > 0)); then

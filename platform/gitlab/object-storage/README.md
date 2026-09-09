@@ -111,7 +111,7 @@ signature_v2 = False
 
 ## 5. Helm Values Mapping
 
-In [`helm-values/gitlab/values-production.yaml`](file:///opt/gitops-platform/helm-values/gitlab/values-production.yaml), these secrets are mapped as follows:
+In [`helm-values/gitlab/values-production.yaml`](../../../helm-values/gitlab/values-production.yaml), these secrets are mapped as follows:
 
 ```yaml
 global:

@@ -11,7 +11,7 @@
 ## 1. Core Principles & Separation of Concerns
 
 ### Infrastructure Configuration (In Git)
-The following parameters describe topology, hostnames, ports, database names, and non-sensitive settings. They reside in GitOps Helm values ([`helm-values/gitlab/values-production.yaml`](file:///opt/gitops-platform/helm-values/gitlab/values-production.yaml)):
+The following parameters describe topology, hostnames, ports, database names, and non-sensitive settings. They reside in GitOps Helm values ([`helm-values/gitlab/values-production.yaml`](../../../helm-values/gitlab/values-production.yaml)):
 * PostgreSQL Host: `gitlab-postgresql-rw.gitlab.svc.cluster.local`, Port: `5432`, Database: `gitlabhq_production`, User: `gitlab`
 * Redis Sentinel: master group `mymaster`, discovery service `gitlab-redis-s-hl.gitlab.svc.cluster.local:26379`, authentication enabled
 * Object Storage: Endpoint: `https://s3.k8s.tss.local`, Bucket names, `proxy_download: true`
