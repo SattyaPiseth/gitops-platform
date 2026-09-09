@@ -10,7 +10,7 @@ readonly GITLEAKS_IMAGE="ghcr.io/gitleaks/gitleaks:v8.30.0"
 
 cd "$REPOSITORY_ROOT"
 
-for command_name in git helm docker yamllint shellcheck; do
+for command_name in git helm docker python3 yamllint shellcheck; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     printf 'Required command is unavailable: %s\n' "$command_name" >&2
     exit 1
@@ -33,11 +33,8 @@ if [[ -n "$invalid_files" ]]; then
   exit 1
 fi
 
-echo 'Checking documentation portability...'
-if git grep -n --fixed-strings 'file:///' -- '*.md'; then
-  echo 'Markdown must use repository-relative links, not local file URIs.' >&2
-  exit 1
-fi
+echo 'Checking Markdown links...'
+python3 scripts/check_markdown_links.py
 
 echo 'Linting shell scripts...'
 mapfile -d '' shell_scripts < <(git ls-files -z '*.sh')

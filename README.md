@@ -48,7 +48,7 @@ specific recovery and rollback review.
 
 ## Validation
 
-Required local tools are Git, Helm, Docker, yamllint, and ShellCheck. Run the
+Required local tools are Git, Helm, Docker, Python 3, yamllint, and ShellCheck. Run the
 same checks used by GitHub Actions:
 
 ```bash
