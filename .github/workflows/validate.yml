@@ -38,48 +38,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes shellcheck
 
-      - name: Lint tracked YAML
-        run: |
-          git ls-files -z '*.yaml' '*.yml' |
-            xargs -0 --no-run-if-empty yamllint
-
-      - name: Reject disabled manifests in Argo discovery
-        run: |
-          invalid_files="$(find clusters/production/argocd/applications \
-            -maxdepth 1 -type f ! -name '*.yaml' ! -name '*.yml' -print)"
-          if [ -n "$invalid_files" ]; then
-            printf 'Unsupported files in the Argo application directory:\n%s\n' \
-              "$invalid_files"
-            exit 1
-          fi
-
-      - name: Validate shell scripts
-        run: shellcheck autopush.sh
-
-      - name: Validate Kubernetes schemas
-        run: |
-          docker run --rm --volume "$PWD:/work:ro" \
-            ghcr.io/yannh/kubeconform:v0.8.0 \
-            -strict -summary -ignore-missing-schemas \
-            /work/clusters /work/platform
-
-      - name: Validate Traefik GitLab Shell entrypoint
-        run: |
-          helm repo add traefik https://traefik.github.io/charts
-          helm template traefik traefik/traefik \
-            --version 41.3.0 \
-            --namespace traefik \
-            --values helm-values/traefik/values.yaml \
-            > "$RUNNER_TEMP/traefik-rendered.yaml"
-
-          grep --fixed-strings --quiet \
-            -- '--entryPoints.gitlab-shell.address=:2222/tcp' \
-            "$RUNNER_TEMP/traefik-rendered.yaml"
-          grep --fixed-strings --quiet 'name: gitlab-shell' \
-            "$RUNNER_TEMP/traefik-rendered.yaml"
-
-      - name: Scan Git history for secrets
-        run: |
-          docker run --rm --volume "$PWD:/repo:ro" \
-            ghcr.io/gitleaks/gitleaks:v8.30.0 \
-            detect --source=/repo --no-banner --redact
+      - name: Validate repository and rendered charts
+        run: ./scripts/validate.sh

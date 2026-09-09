@@ -9,26 +9,17 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
-  source:
-    repoURL: https://ot-container-kit.github.io/helm-charts
-    chart: redis-operator
-    targetRevision: 0.26.1
-    helm:
-      releaseName: redis-operator
-      values: |
-        redisOperator:
-          imagePullPolicy: IfNotPresent
-          watchNamespace: gitlab
-          webhook: false
-          metrics:
-            enabled: true
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+  sources:
+    - repoURL: https://ot-container-kit.github.io/helm-charts
+      chart: redis-operator
+      targetRevision: 0.26.1
+      helm:
+        releaseName: redis-operator
+        valueFiles:
+          - $values/helm-values/redis-operator/values.yaml
+    - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
+      targetRevision: main
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: redis-operator
