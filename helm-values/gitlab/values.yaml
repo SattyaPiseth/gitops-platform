@@ -154,6 +154,13 @@ gitlab:
     minReplicas: 2
     maxReplicas: 3
 
+    # Sized from 24-hour observed peaks; retain CPU capacity while reducing
+    # excess scheduler memory reservation.
+    resources:
+      requests:
+        cpu: 900m
+        memory: 1536Mi
+
     # Avoid concentrating memory-heavy Sidekiq replicas on one worker.
     nodeSelector:
       node-role.kubernetes.io/storage: "true"

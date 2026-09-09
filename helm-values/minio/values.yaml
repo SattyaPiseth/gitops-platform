@@ -49,8 +49,8 @@ tenant:
               v1.min.io/tenant: minio
       resources:
         requests:
-          cpu: 500m
-          memory: 1Gi
+          cpu: 250m
+          memory: 768Mi
         limits:
           cpu: "2"
           memory: 4Gi
