@@ -172,10 +172,11 @@ gitlab:
           matchLabels:
             app: sidekiq
 
-    # Rails initialization exceeds the upstream 20-second liveness delay on
-    # these workers. Readiness remains active while startup completes.
+    # Rails initialization has taken up to 12 minutes on these workers. The
+    # chart does not expose a startup probe, so delay liveness beyond observed
+    # startup while readiness keeps the pod out of service.
     livenessProbe:
-      initialDelaySeconds: 600
+      initialDelaySeconds: 1200
       periodSeconds: 60
       timeoutSeconds: 30
       successThreshold: 1
