@@ -8,8 +8,7 @@ resources:
 
 # Preserve only intentional local deviations from the upstream installation.
 patches:
-  # Seed tracking annotations while retaining compatibility with existing labels.
-  # Switch to annotation-only after all managed resources have reconciled.
+  # Use annotation tracking to avoid collisions when external tools copy labels.
   - target:
       version: v1
       kind: ConfigMap
@@ -17,7 +16,7 @@ patches:
     patch: |-
       - op: add
         path: /data/application.resourceTrackingMethod
-        value: annotation+label
+        value: annotation
   - target:
       version: v1
       kind: ConfigMap
