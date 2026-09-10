@@ -31,6 +31,9 @@ installer or controller.
 - `docs`: operational and recovery guides.
 - `scripts/validate.sh`: the local and CI validation entry point.
 
+Certificate operations are documented in
+[`docs/manual-certificate-renewal-guide.md`](docs/manual-certificate-renewal-guide.md).
+
 ## Reconciliation model
 
 `root-applications` discovers the child Applications and AppProjects. It
