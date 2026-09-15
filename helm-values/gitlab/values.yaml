@@ -161,16 +161,19 @@ gitlab:
         cpu: 900m
         memory: 1536Mi
 
-    # Avoid concentrating memory-heavy Sidekiq replicas on one worker.
+    # Keep the three memory-heavy Sidekiq replicas distributed one per worker.
+    # A hard topology constraint is safe here because all three storage-labelled
+    # workers are eligible and the zero-surge rollout frees a slot first.
     nodeSelector:
       node-role.kubernetes.io/storage: "true"
     topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
+        whenUnsatisfiable: DoNotSchedule
         labelSelector:
           matchLabels:
             app: sidekiq
+            release: gitlab
 
     # Rails initialization has taken up to 12 minutes on these workers. The
     # chart does not expose a startup probe, so delay liveness beyond observed
