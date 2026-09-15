@@ -161,15 +161,15 @@ gitlab:
         cpu: 900m
         memory: 1536Mi
 
-    # Keep the three memory-heavy Sidekiq replicas distributed one per worker.
-    # A hard topology constraint is safe here because all three storage-labelled
-    # workers are eligible and the zero-surge rollout frees a slot first.
+    # Prefer spreading memory-heavy Sidekiq replicas across workers without
+    # blocking availability or upgrades when a worker lacks request headroom.
+    # The exact selector prevents other releases from affecting the skew.
     nodeSelector:
       node-role.kubernetes.io/storage: "true"
     topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: DoNotSchedule
+        whenUnsatisfiable: ScheduleAnyway
         labelSelector:
           matchLabels:
             app: sidekiq
