@@ -76,7 +76,7 @@ render_chart() {
 render_chart cnpg cnpg/cloudnative-pg 0.29.0 cnpg-system --values helm-values/cnpg/values.yaml
 render_chart gitlab-redis opstree/redis-replication 0.17.1 gitlab --values helm-values/gitlab/redis-values.yaml
 render_chart gitlab-runner gitlab/gitlab-runner 0.91.3 gitlab --values helm-values/gitlab-runner/values.yaml
-render_chart gitlab gitlab/gitlab 10.2.4 gitlab --values helm-values/gitlab/values.yaml --values helm-values/gitlab/values-production.yaml
+render_chart gitlab gitlab/gitlab 10.2.6 gitlab --values helm-values/gitlab/values.yaml --values helm-values/gitlab/values-production.yaml
 render_chart headlamp headlamp/headlamp 0.43.0 headlamp --values helm-values/headlamp/values.yaml
 render_chart kube-prometheus-stack prometheus-community/kube-prometheus-stack 87.21.0 monitoring --values helm-values/kube-prometheus-stack/values.yaml
 render_chart kubelet-csr-approver csr-approver/kubelet-csr-approver 1.1.0 kube-system --values helm-values/kubelet-csr-approver/values.yaml
