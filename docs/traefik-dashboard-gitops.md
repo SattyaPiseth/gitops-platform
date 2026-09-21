@@ -106,6 +106,15 @@ and continuously reconciles the generated Secret from Vault.
 Sync waves order the ServiceAccount, `VaultAuth`, `VaultStaticSecret`, and route.
 A wave orders application, but it does not replace resource health checks.
 
+## Availability and scheduling
+
+Traefik runs two replicas. A PodDisruptionBudget keeps at least one replica
+available during voluntary disruptions, and a soft hostname topology constraint
+spreads replicas across workers when capacity permits. `ScheduleAnyway` is
+intentional for this small cluster: temporary imbalance is preferable to an
+unschedulable ingress replica. `minReadySeconds: 10` prevents a newly started
+pod from being treated as available before it has remained ready briefly.
+
 ## Verification
 
 ```bash

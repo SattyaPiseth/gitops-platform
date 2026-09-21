@@ -85,7 +85,9 @@ render_chart minio-operator minio/operator 7.1.1 minio-operator --values helm-va
 render_chart minio minio/tenant 7.1.1 minio-system --values helm-values/minio/values.yaml
 render_chart plugin-barman-cloud cnpg/plugin-barman-cloud 0.7.1 cnpg-system
 render_chart redis-operator opstree/redis-operator 0.26.1 redis-operator --values helm-values/redis-operator/values.yaml
-render_chart traefik traefik/traefik 41.3.0 traefik --values helm-values/traefik/values.yaml
+render_chart traefik traefik/traefik 41.3.0 traefik \
+  --api-versions policy/v1/PodDisruptionBudget \
+  --values helm-values/traefik/values.yaml
 render_chart vault-secrets-operator hashicorp/vault-secrets-operator 0.9.1 vault-secrets-operator-system --values helm-values/vault-secrets-operator/values.yaml
 render_chart vault hashicorp/vault 0.32.0 vault --values helm-values/vault/values.yaml
 
@@ -96,6 +98,14 @@ docker run --rm --volume "$REPOSITORY_ROOT:/work:ro" "$KUBECONFORM_IMAGE" \
 echo 'Validating rendered Helm resources...'
 docker run --rm --volume "$render_directory:/rendered:ro" "$KUBECONFORM_IMAGE" \
   -strict -summary -ignore-missing-schemas /rendered
+
+echo 'Validating Traefik availability controls...'
+grep --fixed-strings --quiet 'replicas: 2' "$render_directory/traefik.yaml"
+grep --fixed-strings --quiet 'apiVersion: policy/v1' "$render_directory/traefik.yaml"
+grep --fixed-strings --quiet 'kind: PodDisruptionBudget' "$render_directory/traefik.yaml"
+grep --fixed-strings --quiet 'minAvailable: 1' "$render_directory/traefik.yaml"
+grep --fixed-strings --quiet 'topologyKey: kubernetes.io/hostname' "$render_directory/traefik.yaml"
+grep --fixed-strings --quiet 'whenUnsatisfiable: ScheduleAnyway' "$render_directory/traefik.yaml"
 
 echo 'Validating Traefik GitLab Shell entrypoint...'
 grep --fixed-strings --quiet -- '--api.dashboard=true' \

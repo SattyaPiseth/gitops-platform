@@ -6,6 +6,14 @@ global:
   checkNewVersion: false
   sendAnonymousUsage: false
 
+deployment:
+  replicas: 2
+  minReadySeconds: 10
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 api:
   dashboard: true
   insecure: false
@@ -83,6 +91,14 @@ podSecurityContext:
   runAsGroup: 65532
   seccompProfile:
     type: RuntimeDefault
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: traefik
 
 resources:
   requests:
