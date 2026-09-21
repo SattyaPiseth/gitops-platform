@@ -79,6 +79,8 @@ Vault
 | [`clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml`](../clusters/production/argocd/resources/vault-secrets-operator/vault-connection.yaml) | `VaultConnection` CR pointing to the internal HA service `https://vault-active.vault.svc.cluster.local:8200`. |
 | [`clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-auth.yaml`](../clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-auth.yaml) | ServiceAccount & `VaultAuth` CR for `monitoring:grafana-vault-auth`. |
 | [`clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-static-secret.yaml`](../clusters/production/argocd/resources/kube-prometheus-stack/grafana-vault-static-secret.yaml) | `VaultStaticSecret` CR creating `Secret/grafana-admin-credentials`. |
+| [`clusters/production/argocd/resources/traefik/vault-auth.yaml`](../clusters/production/argocd/resources/traefik/vault-auth.yaml) | Dedicated `ServiceAccount` and `VaultAuth` for the Traefik dashboard. |
+| [`clusters/production/argocd/resources/traefik/vault-static-secret.yaml`](../clusters/production/argocd/resources/traefik/vault-static-secret.yaml) | `VaultStaticSecret` mapping the dashboard htpasswd value into `Secret/dashboard-basic-auth-secret`. |
 | [`helm-values/kube-prometheus-stack/values.yaml`](../helm-values/kube-prometheus-stack/values.yaml) | Grafana Helm values referencing `existingSecret: grafana-admin-credentials`. |
 
 ---
@@ -309,6 +311,7 @@ This architecture is modular and ready to manage secrets across all other platfo
 ```text
 kv/data/
   ├── monitoring/grafana          ──> Secret/grafana-admin-credentials (monitoring)
+  ├── traefik/dashboard-basic-auth ──> Secret/dashboard-basic-auth-secret (traefik)
   ├── gitlab/
   │   ├── postgresql              ──> Secret/gitlab-postgresql (gitlab)
   │   ├── redis                   ──> Secret/gitlab-redis (gitlab)

@@ -6,6 +6,9 @@ and backend connections. It also documents the MinIO design used by this
 repository. The Traefik behavior described here is verified against the
 official Traefik v3.7 documentation and the cluster's installed v3.7 CRDs.
 
+Dashboard ownership and Vault-backed authentication are documented in
+[`traefik-dashboard-gitops.md`](traefik-dashboard-gitops.md).
+
 ## Mental model
 
 Separate every proxied request into an incoming connection and an outgoing

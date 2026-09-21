@@ -6,6 +6,10 @@ global:
   checkNewVersion: false
   sendAnonymousUsage: false
 
+api:
+  dashboard: true
+  insecure: false
+
 
 ingressClass:
   enabled: true

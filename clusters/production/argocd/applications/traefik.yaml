@@ -22,6 +22,7 @@ spec:
     - repoURL: https://github.com/SattyaPiseth/gitops-platform.git
       targetRevision: main
       ref: values
+      path: clusters/production/argocd/resources/traefik
 
   destination:
     server: https://kubernetes.default.svc

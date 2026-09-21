@@ -11,7 +11,7 @@ Helm overrides under `helm-values`.
 | --- | --- | --- |
 | ESXi virtual machines and guest networking | `esxi-ansible-iac` | VM hardware, guest OS, NIC configuration, and node preparation |
 | Kubernetes lifecycle | Kubespray inventory and playbooks | Kubernetes, etcd, control-plane static pods, Calico, kube-proxy, and node-local DNS |
-| GitOps bootstrap | Manual, documented bootstrap | Initial Argo CD installation and the first `root-applications` apply |
+| GitOps bootstrap | `esxi-ansible-iac` | Automated Argo CD v3 installation and initial root Application handoff |
 | Platform applications | This repository | Argo CD Applications and Projects, GitLab, Longhorn, Vault, VSO, CNPG, MinIO, Traefik, Headlamp, and monitoring |
 | Secret values | HashiCorp Vault | Credentials and application secrets; secret values must never be committed to Git |
 | Secret delivery | This repository and VSO | `VaultAuth` and `VaultStaticSecret` mappings that create Kubernetes Secrets |
@@ -33,11 +33,15 @@ installer or controller.
 
 Certificate operations are documented in
 [`docs/manual-certificate-renewal-guide.md`](docs/manual-certificate-renewal-guide.md).
+Traefik dashboard ownership and operations are documented in
+[`docs/traefik-dashboard-gitops.md`](docs/traefik-dashboard-gitops.md).
 
 ## Reconciliation model
 
 `root-applications` discovers the child Applications and AppProjects. It
-intentionally excludes its own manifest, so a one-time bootstrap apply is
+intentionally excludes its own manifest. The automated bootstrap in
+`esxi-ansible-iac` performs the initial apply. The
+following command is the recovery path when that handoff is
 required:
 
 ```bash
@@ -60,7 +64,7 @@ same checks used by GitHub Actions:
 
 The script checks Git patches and YAML, validates shell and Kubernetes
 resources, renders every pinned Helm release, verifies the Traefik GitLab Shell
-entrypoint, and scans Git history for secrets.
+entrypoint and dashboard wiring, and scans Git history for secrets.
 
 Validation downloads Helm repository indexes and may pull pinned validation
 container images. Secret values are not required and must not be rendered into

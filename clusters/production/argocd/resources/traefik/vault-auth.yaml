@@ -1,0 +1,20 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: traefik-vault-auth
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik-dashboard
+    app.kubernetes.io/component: authentication
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  vaultConnectionRef: vault-secrets-operator-system/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    audiences:
+      - vault
+    role: traefik-dashboard
+    serviceAccount: traefik-vault-auth

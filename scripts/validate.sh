@@ -98,10 +98,26 @@ docker run --rm --volume "$render_directory:/rendered:ro" "$KUBECONFORM_IMAGE" \
   -strict -summary -ignore-missing-schemas /rendered
 
 echo 'Validating Traefik GitLab Shell entrypoint...'
+grep --fixed-strings --quiet -- '--api.dashboard=true' \n  "$render_directory/traefik.yaml"
+if grep --fixed-strings --quiet -- '--api.insecure=true' \n  "$render_directory/traefik.yaml"; then
+  echo 'Traefik insecure dashboard API must remain disabled.' >&2
+  exit 1
+fi
+
 grep --fixed-strings --quiet -- '--entryPoints.gitlab-shell.address=:2222/tcp' \
   "$render_directory/traefik.yaml"
 grep --fixed-strings --quiet 'name: gitlab-shell' "$render_directory/traefik.yaml"
 
+echo 'Validating Traefik dashboard GitOps wiring...'
+grep --fixed-strings --quiet \
+  'path: clusters/production/argocd/resources/traefik' \
+  clusters/production/argocd/applications/traefik.yaml
+grep --fixed-strings --quiet 'path: traefik/dashboard-basic-auth' \
+  clusters/production/argocd/resources/traefik/vault-static-secret.yaml
+grep --fixed-strings --quiet 'secret: dashboard-basic-auth-secret' \
+  clusters/production/argocd/resources/traefik/middleware.yaml
+grep --fixed-strings --quiet 'secretName: traefik-dashboard-tls' \
+  clusters/production/argocd/resources/traefik/ingressroute.yaml
 echo 'Scanning Git history for secrets...'
 docker run --rm --volume "$REPOSITORY_ROOT:/repo:ro" "$GITLEAKS_IMAGE" \
   detect --source=/repo --no-banner --redact

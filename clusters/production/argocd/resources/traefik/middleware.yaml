@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dashboard-basic-auth
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik-dashboard
+    app.kubernetes.io/component: authentication
+    app.kubernetes.io/managed-by: argocd
+spec:
+  basicAuth:
+    secret: dashboard-basic-auth-secret
+    removeHeader: true

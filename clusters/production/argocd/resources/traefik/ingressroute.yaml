@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik-dashboard
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: >-
+        Host(`traefik.k8s.tss.local`) &&
+        (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      middlewares:
+        - name: dashboard-basic-auth
+      services:
+        - kind: TraefikService
+          name: api@internal
+  tls:
+    secretName: traefik-dashboard-tls

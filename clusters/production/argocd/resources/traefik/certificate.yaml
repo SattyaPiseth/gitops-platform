@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-dashboard-tls
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik-dashboard
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/managed-by: argocd
+spec:
+  secretName: traefik-dashboard-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  dnsNames:
+    - traefik.k8s.tss.local
+  issuerRef:
+    name: k8s-internal-ca
+    kind: ClusterIssuer
+    group: cert-manager.io
