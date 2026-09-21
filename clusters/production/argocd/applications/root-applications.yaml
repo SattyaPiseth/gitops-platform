@@ -26,6 +26,19 @@ spec:
     server: https://kubernetes.default.svc
     namespace: argocd
 
+  # The VSO Helm chart uses deletion hooks. Argo CD v3 therefore adds these
+  # controller-owned finalizers to the child Application at runtime.
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Application
+      name: vault-secrets-operator
+      namespace: argocd
+      jqPathExpressions:
+        - >-
+          .metadata.finalizers[] |
+          select(. == "pre-delete-finalizer.argocd.argoproj.io" or
+          . == "pre-delete-finalizer.argocd.argoproj.io/cleanup")
+
   syncPolicy:
     automated:
       prune: true
