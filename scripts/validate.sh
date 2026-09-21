@@ -98,8 +98,10 @@ docker run --rm --volume "$render_directory:/rendered:ro" "$KUBECONFORM_IMAGE" \
   -strict -summary -ignore-missing-schemas /rendered
 
 echo 'Validating Traefik GitLab Shell entrypoint...'
-grep --fixed-strings --quiet -- '--api.dashboard=true' \n  "$render_directory/traefik.yaml"
-if grep --fixed-strings --quiet -- '--api.insecure=true' \n  "$render_directory/traefik.yaml"; then
+grep --fixed-strings --quiet -- '--api.dashboard=true' \
+  "$render_directory/traefik.yaml"
+if grep --fixed-strings --quiet -- '--api.insecure=true' \
+  "$render_directory/traefik.yaml"; then
   echo 'Traefik insecure dashboard API must remain disabled.' >&2
   exit 1
 fi
