@@ -1,6 +1,6 @@
 # Headlamp Production Architecture and GitOps Operations Guide
 
-> **Status:** Recommended production baseline  
+> **Status:** Current production architecture and operations
 > **Scope:** In-cluster Headlamp, Argo CD, Helm, cert-manager, Traefik, Kubernetes RBAC  
 > **Host:** `headlamp.k8s.tss.local`  
 > **TLS issuer:** `ClusterIssuer/k8s-internal-ca`  
@@ -11,7 +11,9 @@
 
 ## 1. Purpose
 
-This document defines a production baseline for running Headlamp as a secure, read-only Kubernetes dashboard managed through GitOps.
+This document describes the implemented production architecture and operating
+procedure for Headlamp as a secure, read-only Kubernetes dashboard managed
+through GitOps.
 
 The architecture has five goals:
 
@@ -1084,7 +1086,7 @@ After sync:
 
 ---
 
-## 21. Current architecture findings
+## 21. Implemented architecture controls
 
 ### Correct
 
@@ -1097,35 +1099,37 @@ After sync:
 - Argo CD external Helm values model is appropriate.
 - automated prune/self-heal is appropriate for this GitOps-managed component.
 
-### Required corrections
+### Verified corrections now in Git
 
-1. Certificate SAN must be:
+1. The Certificate SAN is:
 
    ```text
    headlamp.k8s.tss.local
    ```
 
-   not `headlamp.tss.local`.
+   The legacy `headlamp.tss.local` name is not used.
 
-2. Do not bind `headlamp-platform-view` to runtime `headlamp/headlamp`.
+2. `headlamp-platform-view` is not bound to runtime identity
+   `headlamp/headlamp`.
 
-3. Create `headlamp/headlamp-viewer` as the human login identity.
+3. `headlamp/headlamp-viewer` is the dedicated human login identity.
 
-4. Keep:
+4. The chart's privileged default binding remains disabled:
 
    ```yaml
    clusterRoleBinding:
      create: false
    ```
 
-5. Explicitly keep:
+5. Runtime ServiceAccount impersonation remains disabled:
 
    ```yaml
    config:
      unsafeUseServiceAccountToken: false
    ```
 
-6. Use two Argo CD sources instead of repeating the Git repository twice.
+6. The Application uses two sources: the official chart and one Git source
+   that supplies both `$values` and first-party resources.
 
 ---
 

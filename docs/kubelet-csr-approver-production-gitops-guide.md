@@ -1,6 +1,6 @@
 # kubelet-csr-approver Production GitOps Architecture & Operations Guide
 
-> **Status:** Production migration baseline  
+> **Status:** Current production design; deliberate manual synchronization
 > **Component:** kubelet-csr-approver  
 > **Current chart:** `kubelet-csr-approver-1.1.0`  
 > **Current app version:** `v1.1.0`  
@@ -13,7 +13,15 @@
 
 ## 1. Purpose
 
-This document defines the production architecture, migration procedure, validation controls, rollback process, operational rules, and hardening roadmap for managing `kubelet-csr-approver` through Argo CD and GitOps.
+This document defines the production architecture, validation controls,
+rollback process, operational rules, and hardening roadmap for managing
+`kubelet-csr-approver` through Argo CD and GitOps.
+
+The Application has already been adopted by Argo CD and intentionally has no
+`syncPolicy.automated` block. Normal changes are committed to Git, validated,
+reviewed in the Argo CD diff, and synchronized deliberately. The migration
+sections remain for disaster recovery and historical context; do not rerun
+their one-time adoption commands on the healthy managed release.
 
 The design intentionally separates:
 
@@ -22,7 +30,8 @@ The design intentionally separates:
 3. **Future security hardening** of CSR policy.
 4. **Future monitoring enhancements** such as `ServiceMonitor`.
 
-The first migration must preserve current behavior.
+Any recovery adoption must preserve current behavior before an upgrade or
+policy change is considered.
 
 ---
 
@@ -55,17 +64,16 @@ A configuration error could approve a serving certificate with an invalid hostna
 
 ---
 
-## 3. Existing production state
+## 3. Current production state
 
-The existing Helm release is:
+The declared Argo CD release is:
 
 ```text
 Release:       kubelet-csr-approver
 Namespace:     kube-system
-Revision:      2
 Chart:         kubelet-csr-approver-1.1.0
 App version:   v1.1.0
-Status:        deployed
+Sync policy:   manual
 Replicas:      2
 ```
 
@@ -1034,9 +1042,10 @@ Do not manually approve a failed CSR merely to make it work until the validation
 
 ---
 
-## 24. Enable automatic GitOps reconciliation only after stable adoption
+## 24. Optional automatic reconciliation policy change
 
-After the manual sync has been verified, update the Application through Git:
+The current production policy remains manual. If a separate security review
+approves automatic reconciliation, update the Application through Git:
 
 ```yaml
 syncPolicy:
@@ -1311,7 +1320,7 @@ Emergency changes must be documented and immediately reconciled into Git.
 
 ## 31. Production verification checklist
 
-### Before migration
+### Historical recovery/adoption baseline
 
 - [ ] Current release version captured.
 - [ ] User-supplied values captured.
@@ -1328,7 +1337,7 @@ Emergency changes must be documented and immediately reconciled into Git.
 - [ ] Current logs healthy.
 - [ ] Current CSR state reviewed.
 
-### Before first Argo sync
+### Before a recovery/adoption sync
 
 - [ ] Chart pinned to `1.1.0`.
 - [ ] No version upgrade.
@@ -1355,7 +1364,7 @@ Emergency changes must be documented and immediately reconciled into Git.
 - [ ] No unexpected CSR approval.
 - [ ] No unexpected CSR denial.
 
-### Before enabling automated sync
+### Before an optional automated-sync policy change
 
 - [ ] Stable adoption confirmed.
 - [ ] Git is authoritative.

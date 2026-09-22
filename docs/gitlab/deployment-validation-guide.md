@@ -3,7 +3,7 @@
 > **Status:** Production Baseline & Acceptance Gate  
 > **Target System:** GitLab Community Edition (CE) & GitLab Runner  
 > **Environment:** Production (`k8s.tss.local`)  
-> **Core Philosophy:** *Do not consider GitLab production-ready simply because every pod is `Running`; consider it production-ready only when required flows are proven, forbidden flows are blocked, credentials are automated, GitOps self-healing works, monitoring detects failures, and a real backup can be restored successfully.*
+> **Core Philosophy:** *Do not consider GitLab production-ready simply because every pod is `Running`; consider it production-ready only when required flows are proven, forbidden flows are blocked, credentials are automated, GitOps drift is detected and deliberately reconciled, monitoring detects failures, and a real backup can be restored successfully.*
 
 ---
 
@@ -15,7 +15,7 @@
 ├───────────────────────┬───────────────────────┬───────────────────────┬────────────────┤
 │ 1. Access Control     │ 2. Network Isolation  │ 3. Secret Security    │ 4. Resilience  │
 │    • BasicAuth on Mon │    • Default Deny     │    • Zero Git secrets │    • PDBs      │
-│    • Least Privilege  │    • Workload-level   │    • VSO auto-sync    │    • Self-heal │
+│    • Least Privilege  │    • Workload-level   │    • VSO auto-sync    │    • Recovery  │
 │    • Scoped AppProject│    • No Vault Egress  │    • Identity tokens  │    • Restore   │
 └───────────────────────┴───────────────────────┴───────────────────────┴────────────────┘
 ```
@@ -113,9 +113,12 @@ kubectl get secret -n gitlab gitlab-runner-secret -o jsonpath='{.data}' | grep -
 
 ---
 
-## 6. GitOps Lifecycle & Self-Healing Drift Drill
+## 6. GitOps lifecycle and observed drift-reconciliation drill
 
-Prove that Git is the sole authority and Argo CD automatically heals drift:
+The primary `gitlab` Application intentionally uses manual synchronization for
+observed stateful changes. Prove that Argo CD detects drift and that an operator
+can restore the Git state deliberately. Run this drill only in an approved
+maintenance window because it temporarily changes a production workload.
 
 ```bash
 # 1. Intentionally modify a resource manually (e.g. edit replica count or label)
@@ -124,8 +127,11 @@ kubectl scale deployment -n gitlab gitlab-sidekiq-all-in-1-v2 --replicas=5
 # 2. Verify Argo CD detects OutOfSync
 kubectl get application -n argocd gitlab -o jsonpath='{.status.sync.status}'
 
-# 3. Verify Argo CD selfHeal restores desired Git state (replicas: 2)
-sleep 15
+# 3. Review the Argo CD diff, then deliberately restore desired Git state
+argocd app diff gitlab
+argocd app sync gitlab
+
+# 4. Verify the declared replica count is restored
 kubectl get deployment -n gitlab gitlab-sidekiq-all-in-1-v2 -o jsonpath='{.spec.replicas}'
 # Expected: 2
 ```
@@ -237,7 +243,7 @@ kubectl exec -n gitlab -it $(kubectl get pod -n gitlab -l app=toolbox -o jsonpat
 
 [ ] GitOps & Automation
     [x] Root App-of-Apps manages all platform dependencies
-    [x] Automated sync and self-healing verified
+    [x] Manual GitLab sync policy, drift detection, and observed reconciliation verified
 
 [ ] Stateful Dependencies
     [x] PostgreSQL connection, privileges, and migrations verified

@@ -28,9 +28,10 @@ installer or controller.
 - `clusters/production/argocd/resources`: resources owned by platform Applications.
 - `helm-values`: pinned chart overrides, grouped by release.
 - `platform`: first-party Kubernetes resources and prerequisites.
-- `docs`: operational and recovery guides.
+- `docs`: indexed operational, conceptual, and recovery guides.
 - `scripts/validate.sh`: the local and CI validation entry point.
 
+Start with the [documentation index](docs/README.md) to select the owning guide.
 Certificate operations are documented in
 [`docs/manual-certificate-renewal-guide.md`](docs/manual-certificate-renewal-guide.md).
 Traefik dashboard ownership and operations are documented in
@@ -48,10 +49,13 @@ required:
 kubectl apply -f clusters/production/argocd/applications/root-applications.yaml
 ```
 
-Most platform Applications use automated pruning and self-healing. GitLab and
-MinIO remain manually synchronized so stateful changes can be reviewed and
-observed. Do not enable automated pruning for either application without a
-specific recovery and rollback review.
+Most platform Applications use automated pruning and self-healing. The primary
+`gitlab` and `minio` Applications remain manually synchronized so stateful
+changes can be reviewed and observed. `kubelet-csr-approver` is also manual
+because it participates in the node-serving certificate trust path. Do not
+enable automation for these three Applications without a component-specific
+recovery, rollback, and observation review. Their prerequisite, operator, and
+runner Applications may remain automated as declared in their own manifests.
 
 ## Validation
 
