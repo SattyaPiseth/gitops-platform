@@ -11,15 +11,18 @@ Helm overrides under `helm-values`.
 | --- | --- | --- |
 | ESXi virtual machines and guest networking | `esxi-ansible-iac` | VM hardware, guest OS, NIC configuration, and node preparation |
 | Kubernetes lifecycle | Kubespray inventory and playbooks | Kubernetes, etcd, control-plane static pods, Calico, kube-proxy, and node-local DNS |
-| GitOps bootstrap | `esxi-ansible-iac` | Automated Argo CD v3 installation and initial root Application handoff |
+| GitOps bootstrap | `esxi-ansible-iac` | Initial Argo CD installation and root handoff; reviewed recovery path |
+| Argo CD installation after handoff | This repository | `argocd-runtime` reconciles the complete pinned installation and local patches |
 | Platform applications | This repository | Argo CD Applications and Projects, GitLab, Longhorn, Vault, VSO, CNPG, MinIO, Traefik, Headlamp, and monitoring |
 | Secret values | HashiCorp Vault | Credentials and application secrets; secret values must never be committed to Git |
 | Secret delivery | This repository and VSO | `VaultAuth` and `VaultStaticSecret` mappings that create Kubernetes Secrets |
 
-Argo CD's runtime configuration is reconciled by `argocd-runtime`. The Argo CD
-installation itself and cert-manager are currently bootstrap dependencies. Any
-change to their ownership must be documented here before adding another
-installer or controller.
+After bootstrap handoff, `argocd-runtime` owns the full Argo CD installation,
+including its controllers and CRDs. Bootstrap must stop enforcing a competing
+installation; its implementation must be verified in `esxi-ansible-iac`.
+cert-manager installation remains a bootstrap dependency. See the
+[component ownership and lifecycle contract](docs/component-lifecycle.md) for
+handoff, recovery, deletion controls, and the component register.
 
 ## Repository layout
 
@@ -57,16 +60,23 @@ enable automation for these three Applications without a component-specific
 recovery, rollback, and observation review. Their prerequisite, operator, and
 runner Applications may remain automated as declared in their own manifests.
 
+Child Applications, Projects, and explicitly declared Namespaces require Argo CD
+confirmation before pruning or deletion cleanup. PostgreSQL is retained on both
+paths. These protections must reach live resources before a removal change;
+they do not block direct Kubernetes deletion. Follow the lifecycle contract for
+adoption and planned retirement.
+
 ## Validation
 
-Required local tools are Git, Helm, Docker, Python 3, yamllint, and ShellCheck. Run the
+Required local tools are Git, Helm, Docker, Python 3 with PyYAML, yamllint, and ShellCheck. Run the
 same checks used by GitHub Actions:
 
 ```bash
 ./scripts/validate.sh
 ```
 
-The script checks Git patches and YAML, validates shell and Kubernetes
+The script checks Git patches, YAML, lifecycle deletion boundaries and their
+regression tests, validates shell and Kubernetes
 resources, renders every pinned Helm release, verifies the Traefik GitLab Shell
 entrypoint and dashboard wiring, and scans Git history for secrets.
 

@@ -33,6 +33,10 @@ if [[ -n "$invalid_files" ]]; then
   exit 1
 fi
 
+echo 'Checking lifecycle deletion boundaries...'
+python3 scripts/check_lifecycle.py
+python3 -B -m unittest discover -s scripts -p 'test_*.py'
+
 echo 'Checking Markdown links...'
 python3 scripts/check_markdown_links.py
 

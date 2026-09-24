@@ -21,9 +21,13 @@ initial database bootstrap.
 
 ## Operations
 
-The Cluster resource is protected from automatic Argo CD pruning. Removing it
-from Git does not authorize database deletion. Verify tested backups before any
-destructive database operation.
+The Cluster resource is retained during Argo CD pruning and Application deletion
+cleanup (`Prune=false,Delete=false`). The containing Namespace separately requires
+confirmation for Argo CD removal. These controls do not prevent direct Kubernetes
+or namespace deletion by an administrator. Removing the Cluster from Git does
+not authorize database deletion. Follow the
+[component lifecycle contract](../../../docs/component-lifecycle.md) and verify
+tested backups before any destructive database operation.
 
 Longhorn replication provides storage availability, not a database backup.
 Configure an approved object-store backup target and test restoration before

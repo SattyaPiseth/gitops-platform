@@ -4,6 +4,7 @@ metadata:
   name: platform
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm
     argocd.argoproj.io/sync-wave: "-10"
 spec:
   description: Production Kubernetes platform components
