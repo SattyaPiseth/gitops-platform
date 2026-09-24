@@ -24,6 +24,7 @@ configuration source.
 
 | Guide | Current purpose |
 | --- | --- |
+| [Component ownership and lifecycle](component-lifecycle.md) | Bootstrap handoff, deletion boundaries, adoption and retirement procedures, and component lifecycle register |
 | [Headlamp production guide](headlamp-production-gitops-guide.md) | Current architecture, access model, verification, and rollback |
 | [kubelet CSR approver guide](kubelet-csr-approver-production-gitops-guide.md) | Current security policy and deliberate manual-sync operations; migration sections are retained as historical procedure |
 | [Traefik dashboard operations](traefik-dashboard-gitops.md) | Dashboard ownership, Vault credential flow, availability, verification, and rotation |

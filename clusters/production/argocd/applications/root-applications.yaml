@@ -38,6 +38,8 @@ spec:
           select(. == "pre-delete-finalizer.argocd.argoproj.io" or
           . == "pre-delete-finalizer.argocd.argoproj.io/cleanup")
 
+  # Child Applications and Projects require confirmation before removal.
+  # Their metadata sync-options govern deletion by this parent.
   syncPolicy:
     automated:
       prune: true

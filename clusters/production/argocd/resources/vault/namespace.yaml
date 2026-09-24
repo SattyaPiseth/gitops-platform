@@ -3,6 +3,7 @@ kind: Namespace
 metadata:
   name: vault
   annotations:
+    argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm
     argocd.argoproj.io/sync-wave: "-3"
   labels:
     app.kubernetes.io/part-of: platform
