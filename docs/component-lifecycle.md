@@ -258,3 +258,39 @@ The reviewer may mark this milestone complete only after all acceptance gates
 pass and live adoption is recorded. Backup/restore proof is the next milestone:
 PostgreSQL ownership remains unchanged until recovery tests cover PostgreSQL,
 GitLab, and required encryption material from independent backups.
+
+### Automated disposable tests
+
+The `Lifecycle deletion tests` GitHub Actions workflow runs
+[`scripts/integration/lifecycle.py`](../scripts/integration/lifecycle.py) on an
+isolated hosted runner. It creates a uniquely named Kind cluster and passes its
+new kubeconfig and context explicitly to every Kubernetes command. It never
+imports production Applications, Vault credentials, or a user's kubeconfig.
+Argo CD and CNPG versions, PostgreSQL image, and protection annotations are read
+from this repository. Test topology is deliberately smaller: one Kind node,
+one PostgreSQL instance, and Kind local storage instead of Longhorn.
+
+The suite exercises parent pruning, parent cascading deletion (including a
+Project), the direct-child deletion boundary, Namespace pruning/deletion, and
+CNPG pruning/owner-deletion retention. Positive confirmation cases verify that
+the gates can be deliberately released. PostgreSQL checks preserve the Cluster
+UID and query a known test record after each retention operation.
+
+Download the `lifecycle-evidence` workflow artifact and reference its run and
+commit in the external acceptance record. It contains timestamps, versions,
+per-scenario results, and status diagnostics on failure. A test run does not
+prove production storage retention, production RBAC, backup restoration, or
+branch protection. Cleanup deletes only that invocation's test cluster and Git
+fixture container; cancellation also destroys the ephemeral hosted runner.
+
+Local execution requires Docker, Kind, kubectl, Helm, Git, Python and PyYAML:
+
+```bash
+python3 scripts/integration/lifecycle.py --evidence /tmp/lifecycle-evidence
+```
+
+Repository administrators must separately configure `main` to require PR review
+and the successful `validate` and `deletion-tests` checks after those check names
+have appeared in CI. Review administrator/bypass permissions explicitly. The
+available GitHub integration cannot write branch-protection settings; workflow
+files alone do not enforce merge requirements.

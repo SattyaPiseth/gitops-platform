@@ -1,0 +1,46 @@
+---
+name: Lifecycle deletion tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lifecycle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deletion-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install isolated test tools
+        run: |
+          python -m pip install PyYAML==6.0.2
+          mkdir -p "$RUNNER_TEMP/lifecycle-bin"
+          cd "$RUNNER_TEMP/lifecycle-bin"
+          curl --fail --location --retry 3 -o kind-linux-amd64 https://github.com/kubernetes-sigs/kind/releases/download/v0.31.0/kind-linux-amd64
+          curl --fail --location --retry 3 -o kind-linux-amd64.sha256sum https://github.com/kubernetes-sigs/kind/releases/download/v0.31.0/kind-linux-amd64.sha256sum
+          sha256sum --check kind-linux-amd64.sha256sum
+          mv kind-linux-amd64 kind
+          chmod +x kind
+          echo "$RUNNER_TEMP/lifecycle-bin" >> "$GITHUB_PATH"
+      - name: Exercise deletion boundaries in a new Kind cluster
+        run: python3 scripts/integration/lifecycle.py --evidence "$RUNNER_TEMP/lifecycle-evidence"
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifecycle-evidence
+          path: ${{ runner.temp }}/lifecycle-evidence
+          if-no-files-found: error
+          retention-days: 30
