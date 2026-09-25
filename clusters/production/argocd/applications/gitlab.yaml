@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: https://charts.gitlab.io/
       chart: gitlab
-      targetRevision: 10.2.6
+      targetRevision: 10.2.7
       helm:
         releaseName: gitlab
         valueFiles:
