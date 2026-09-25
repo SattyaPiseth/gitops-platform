@@ -1,175 +1,78 @@
-# GitLab CE 19.2.7 production patch readiness
+# GitLab 19.2.7 upgrade guide
 
-## Master gate and scope
+Upgrade GitLab **Community Edition (CE) 19.2.6 → 19.2.7** with Helm chart
+**10.2.6 → 10.2.7**.
 
-`Recovery Ready → Platform Healthy → Rehearsal Passed → Chart Validated → Maintenance Approved → Upgrade → Post-Validation Passed`
+**Status: not ready to upgrade (NO-GO).** A complete backup and successful restore
+have not been proven. Earlier checks found `403 AccessDenied` errors when the
+backup tool read application buckets. Recheck live conditions before proceeding.
 
-**Current assessment: NO-GO.** This document is a plan, not evidence that its
-checks passed. The repository review was performed on 2026-09-25. Live health,
-migration completion, full backup coverage, separate recovery-secret custody,
-external copies, and isolated restoration require fresh evidence.
+This guide describes future work. It does not authorize production changes.
+Keep GitLab 19.3/19.4 and changes to PostgreSQL, Redis, MinIO, networking,
+credentials, and backup scheduling in separate work.
 
-Scope: GitLab CE **19.2.6 → 19.2.7**, Helm chart **10.2.6 → 10.2.7**.
-GitLab 19.3/19.4 and changes to CNPG, PostgreSQL, Redis, MinIO, networking,
-credentials, and scheduling are outside this patch. Recovery remediation must
-be separately reviewed. No production operation is authorized by this guide.
+## Start here
 
-- **GO:** every mandatory pre-upgrade gate passes and maintenance is approved.
-- **NO-GO:** recovery, database, storage, migration, or platform checks fail or
-  lack evidence. An archive upload or exit code zero is insufficient.
-- Reverting chart 10.2.7 to 10.2.6 is **not an assumed-safe rollback after database
-  migrations**. Recovery must account for compatible database and object data.
-- Docker-dependent validation runs in CI or a dedicated host. Do not install
-  or enable Docker on the containerd-based Kubernetes control-plane node.
+Follow this order. Stop when a required check fails or has no evidence.
 
-Command labels:
+**Recovery Ready → Platform Healthy → Rehearsal Passed → Chart Validated →
+Maintenance Approved → Upgrade → Post-Validation Passed**
 
-| Label | Meaning |
+| Step | What you need before continuing |
 | --- | --- |
-| READ-ONLY | Inspect state without deliberate configuration/data changes |
-| VALIDATION | Run checks; may create local reports or consume application resources |
-| CHANGE | Writes application/infrastructure data; requires explicit approval |
-| RECOVERY | Restores or overwrites data; requires explicit approval and isolation |
+| 1. Prove recovery | Complete backup, separately protected secrets, external copy, successful restore |
+| 2. Check platform health | Healthy dependencies, enough storage, completed database migrations |
+| 3. Rehearse | Successful patch upgrade in an isolated test environment |
+| 4. Prepare the patch | Reviewed version changes, chart differences, and passing CI checks |
+| 5. Upgrade production | Explicit approval, maintenance window, and a recovery operator |
+| 6. Verify the result | Correct version, working features, completed migrations, and stable monitoring |
 
-Never print Secret values, `.s3cfg`, tokens, or decoded credentials. Store logs,
-rendered manifests and recovery evidence in restricted storage, not this repo.
+**What to do now:** complete step 1. Do not start a production upgrade while the
+recovery gate is closed.
 
-## Findings and repository baseline
+## Before using the commands
 
-| Source | Observed declaration and implication |
+Run commands from the repository root. Confirm the intended cluster and Argo CD
+server before any operation. Replace placeholders with reviewed values.
+
+| Command label | Meaning |
 | --- | --- |
-| [GitLab Application](../../clusters/production/argocd/applications/gitlab.yaml) | Chart 10.2.6, manual sync, values from Git `main`; review the precise Git revision before sync |
-| [Version record](../../helm-values/gitlab/VERSION) | GitLab 19.2.6 / chart 10.2.6 |
-| [GitLab values](../../helm-values/gitlab/values.yaml) | CE, Traefik, upgradeCheck disabled, zero-surge Webservice/Sidekiq rollout, slow Sidekiq startup allowance |
-| [Production values](../../helm-values/gitlab/values-production.yaml) | External PostgreSQL and Redis/Sentinel; distinct Rails, Registry and Toolbox S3 secrets |
-| [Validation script](../../scripts/validate.sh) | Renders 10.2.6; includes Docker-based schema and secret scanning |
-| [Root Application](../../clusters/production/argocd/applications/root-applications.yaml) | Auto-syncs child Application definitions |
-| [Prerequisites](../../clusters/production/argocd/applications/gitlab-prerequisites.yaml) | Auto-sync/prune/self-heal; manual GitLab sync does not freeze prerequisites |
-| [CNPG cluster](../../platform/gitlab/database/cluster.yaml) | PostgreSQL 17.9 by digest, three instances, 50 GiB data + 10 GiB WAL each, Longhorn, supervised primary updates; no backup configuration in this manifest |
-| [Redis values](../../helm-values/gitlab/redis-values.yaml) | Three Redis and three Sentinel instances, 7.2.16, persistent Longhorn storage |
-| GitLab Gitaly values | 50 GiB Longhorn PVC; live replica/topology and free capacity need verification |
-| [MinIO values](../../helm-values/minio/values.yaml) | Four 25 GiB volumes; explicitly classified pre-production |
-| [MinIO storage class](../../platform/minio/prerequisites/storageclass.yaml) | One Longhorn replica per volume, strict-local placement, Retain policy; not independent recovery storage |
-| [VSO resources](../../platform/gitlab/vault/gitlab-vault-static-secrets.yaml) | Backup config from KV v2 mount `kv`, path `gitlab/object-storage/backup`; no Toolbox restart target for this Secret |
-| [AppProject](../../clusters/production/argocd/projects/gitlab-project.yaml) | Chart-generated Rails secret excluded from orphan warnings; this does not back it up |
+| READ-ONLY | Inspect state without deliberately changing configuration or data |
+| VALIDATION | Run checks; these may create local reports or use application resources |
+| CHANGE | Write data or change a deployment; explicit approval required |
+| RECOVERY | Restore or overwrite data; explicit approval required |
 
-The earlier live review reported source-bucket 403 errors. That evidence is
-historical, not a fresh live check. The current [object-storage guide](../../platform/gitlab/object-storage/README.md)
-still limits the backup identity to archive/staging buckets; source read access
-and effective inherited permissions need a separate review. Previously drafted
-backup policies were removed and must not be treated as deployed controls.
+Never print credentials, tokens, Secret values, or `.s3cfg` contents. Keep logs,
+rendered manifests, and backup evidence in restricted storage outside Git.
 
-### Disabled upgrade check and chart hooks
+## 1. Prove that GitLab can be restored
 
-`upgradeCheck.enabled: false` disables the chart's upgrade-path safeguard.
-Leave it unchanged until its intended behavior is tested separately.
+A backup file alone is not enough. Record evidence for all of these:
 
-Argo CD renders Helm templates and manages lifecycle itself. Supported Helm
-pre-install/pre-upgrade hooks map to PreSync; a sync is not a native Helm upgrade.
-Review migration/shared-secrets Jobs, hook annotations, ordering, recreation,
-cleanup, and RBAC using the exact target chart and installed Argo CD version.
-Check for mixed Argo/Helm hook annotations. Selective resource sync does not run
-hooks. Application deletion-confirmation annotations do not automatically
-protect all child PVCs or Secrets.
+- Database and repositories were backed up successfully.
+- Every required object-storage bucket was included, with **zero 403 errors**
+  and no unexplained skipped components.
+- The original Rails encryption secrets are protected separately from the archive.
+- A copy outside this cluster was downloaded and its checksum verified.
+- That external copy was restored successfully into an isolated environment.
 
-Sources: [Argo Helm semantics](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/),
-[resource hooks](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/).
+The earlier backup issue remains unresolved by this documentation. Review the
+[object-storage configuration](../../platform/gitlab/object-storage/README.md)
+and actual MinIO permissions before attempting a new backup. Keep Rails,
+Registry, and Toolbox identities separate.
 
-## Operational runbook
+Include Registry, uploads, artifacts, LFS, and packages. Check MR diffs,
+Terraform state, and disabled-feature buckets for historical data before
+excluding them. A denied request does not mean a bucket is empty or absent.
 
-For every stage record **Purpose → Command → Expected Result → PASS/FAIL →
-Action if Failed**, with operator, timestamp, context, Git SHA and evidence link.
-All commands below are future procedures; none were run to create this guide.
+**READ-ONLY — check access to the required buckets:**
 
-Set `PROD_CONTEXT` to the independently verified production context. Resolve
-`PRIMARY`, `MIGRATION_JOB`, `BACKUP_ID`, and file paths from reviewed evidence;
-do not copy example placeholders into a production command.
-
-### 1. Current baseline
-
-**Purpose:** establish deployed and declared identity.
-
-**Command — READ-ONLY:**
+First inspect the available contexts, then set the verified production context:
 
 ```bash
-git status --short --branch
-cat helm-values/gitlab/VERSION
 kubectl config get-contexts
-kubectl --context "$PROD_CONTEXT" version
-kubectl --context "$PROD_CONTEXT" -n argocd get applications gitlab gitlab-prerequisites
-kubectl --context "$PROD_CONTEXT" -n gitlab get deployments,statefulsets
-kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbox -- \
-  gitlab-rake gitlab:env:info
+PROD_CONTEXT='REPLACE_WITH_VERIFIED_PRODUCTION_CONTEXT'
 ```
-
-**Expected Result:** CE 19.2.6/chart 10.2.6, correct context, healthy baseline,
-no unexplained drift. **PASS/FAIL:** record version and health evidence.
-**Action if Failed:** stop and reconcile discrepancies.
-
-### 2. Recovery readiness gate
-
-**Purpose:** establish usable recovery, not merely backup presence.
-
-**Command — READ-ONLY:** review signed-off backup logs, component manifest,
-external-copy checksum, secret-custody record and isolated restore report.
-Inspect original Rails Secret metadata without its payload:
-
-```bash
-kubectl --context "$PROD_CONTEXT" -n gitlab get secret gitlab-rails-secret \
-  -o custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp
-```
-
-**Expected Result:** all required data captured; original Rails encryption
-secrets protected separately; external copy downloaded and verified; same-version
-restore succeeded. **PASS/FAIL:** existence alone fails to prove recovery.
-**Action if Failed:** remediate separately; keep upgrade closed. Protect SSH
-host keys and document TLS/CA and independent Vault recovery as well.
-
-### 3. Platform preflight
-
-**Purpose:** confirm dependencies, capacity and migrations.
-
-**Commands — READ-ONLY:**
-
-```bash
-kubectl --context "$PROD_CONTEXT" get nodes
-kubectl --context "$PROD_CONTEXT" -n gitlab get pods,pvc,pdb,jobs
-kubectl --context "$PROD_CONTEXT" -n minio-system get pods,pvc
-kubectl --context "$PROD_CONTEXT" -n longhorn-system get volumes.longhorn.io
-kubectl --context "$PROD_CONTEXT" -n gitlab describe cluster.postgresql.cnpg.io gitlab-postgresql
-kubectl --context "$PROD_CONTEXT" -n gitlab get cluster.postgresql.cnpg.io gitlab-postgresql \
-  -o jsonpath='{.status.currentPrimary}{"\n"}'
-kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbox -- \
-  gitlab-rake db:migrate:status
-```
-
-With `PRIMARY` set to the confirmed current primary:
-
-```bash
-kubectl --context "$PROD_CONTEXT" -n gitlab exec "$PRIMARY" -c postgres -- \
-  psql -U postgres -d gitlabhq_production -c \
-  'SELECT count(*) AS incomplete FROM batched_background_migrations WHERE status NOT IN (3, 6);'
-```
-
-Also inspect Admin → Monitoring → Background migrations. Repeat checks for each
-configured GitLab database. Verify actual CNPG replication/lag using approved
-monitoring or the installed CNPG status plugin; pod readiness alone is insufficient.
-
-**Expected Result:** three healthy DB instances, streaming replicas without growing
-lag, no pending/failed migrations, zero incomplete background migrations. Verify
-Redis/Sentinel quorum and primary discovery, MinIO health, Gitaly repository
-access, TLS/VSO health, PVC availability and measured data/WAL/staging free space.
-No active backup/restore, storage rebuild, failover, or competing maintenance.
-
-**PASS/FAIL:** Running pods and Bound PVCs alone do not pass the gate.
-**Action if Failed:** stop and resolve the failing dependency separately. Do not
-force-finalize migrations or change database versions as part of this patch.
-
-### 4. Backup/restore validation
-
-**Purpose:** verify source access and produce a complete acceptance backup.
-
-**Command — READ-ONLY:**
 
 ```bash
 kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbox -- sh -eu -c '
@@ -181,145 +84,171 @@ kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbo
 '
 ```
 
-Listing is not proof of object reads: read representative existing objects into
-`/dev/null` using the same identity. Inventory historical MR diffs, Terraform
-state and disabled-feature buckets using authorized administration. Approve
-exclusions only with evidence; 403 does not mean absent or empty.
+A successful listing proves only listing access. Also verify that the same
+identity can read a representative existing object from each nonempty source.
+Do not display object contents.
 
-**Command — CHANGE, separate backup approval required:**
+After a separately approved backup, check its logs and archive metadata, test
+nested archive integrity, and compare it with the source inventory. An exit code
+of zero or a successful upload does not prove completeness. Empty components
+may be skipped only when the inventory explains why.
+
+Use the official [backup procedure](https://docs.gitlab.com/charts/backup-restore/backup/)
+and [restore procedure](https://docs.gitlab.com/charts/backup-restore/restore/).
+Restore into **CE 19.2.6 / chart 10.2.6** first, using the original Rails secrets,
+separate runtime credentials and separate storage. Block access to production
+services, email, runners and integrations. Follow the required database-client
+shutdown and restart steps. Preserve SSH host keys and document TLS/CA and Vault
+recovery too.
+
+**Pass:** all recovery evidence is recorded.
+
+**Fail:** stop and repair the backup or restore process before upgrading.
+
+## 2. Check the platform and database
+
+**READ-ONLY — confirm the baseline and inspect dependencies:**
 
 ```bash
-set -o pipefail
-umask 077
+cat helm-values/gitlab/VERSION
+kubectl --context "$PROD_CONTEXT" -n argocd get applications gitlab gitlab-prerequisites
+kubectl --context "$PROD_CONTEXT" get nodes
+kubectl --context "$PROD_CONTEXT" -n gitlab get pods,pvc,pdb,jobs
+kubectl --context "$PROD_CONTEXT" -n minio-system get pods,pvc
+kubectl --context "$PROD_CONTEXT" -n longhorn-system get volumes.longhorn.io
+kubectl --context "$PROD_CONTEXT" -n gitlab describe cluster.postgresql.cnpg.io gitlab-postgresql
 kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbox -- \
-  backup-utility 2>&1 | tee "$BACKUP_LOG"
+  gitlab-rake db:migrate:status
 ```
 
-The plain command is a template: add only explicitly reviewed skip arguments
-for proven-unneeded components. Never ignore default-bucket failures. Take the
-acceptance backup in a rehearsed quiet window for cross-component consistency.
+Also open **GitLab Admin → Monitoring → Background migrations**. Confirm no
+queued, active, finalizing, or failed migrations remain. Check every configured
+GitLab database. Do not force-mark migrations as complete to pass this step.
 
-**Commands — VALIDATION, protected host:**
+| Check | Required result |
+| --- | --- |
+| Version | Deployed CE 19.2.6 and declared chart 10.2.6 agree |
+| PostgreSQL | Three healthy instances; replicas streaming without growing lag |
+| Redis/Sentinel | Healthy replication, quorum, and primary discovery |
+| MinIO and Gitaly | Object and repository access working |
+| Storage | Healthy volumes; enough measured data, WAL, and backup staging space |
+| Secrets and certificates | VSO synchronization and TLS working |
+| Workloads | No unexplained failures or restart increases; sufficient rollout capacity |
+| Migrations | Schema and background migrations complete |
+| Other work | No concurrent backup, restore, failover, storage rebuild, or platform maintenance |
+
+Running pods and Bound volumes are not sufficient evidence on their own. Use
+monitoring to verify replication, capacity, and application behavior.
+
+**Pass:** all checks are healthy and recorded.
+
+**Fail:** stop and resolve the failing dependency separately.
+
+## 3. Rehearse the patch
+
+Use the isolated environment restored in step 1. Apply the proposed chart
+10.2.7 change there through the same Argo CD process intended for production.
+
+- Confirm database migrations and chart Jobs complete successfully.
+- Run the functional checks in step 6.
+- Record migration time, startup time, and recovery time.
+- Set the production maintenance window and timeout from those measurements.
+
+**Pass:** restore and patch rehearsal both succeed.
+
+**Fail:** fix the procedure and repeat the rehearsal.
+
+## 4. Prepare and review the repository patch
+
+Update these references together in a future patch PR:
+
+| File | Required change |
+| --- | --- |
+| [GitLab Application](../../clusters/production/argocd/applications/gitlab.yaml) | Chart `targetRevision` to `10.2.7` |
+| [Version record](../../helm-values/gitlab/VERSION) | `GITLAB_VERSION=19.2.7` and `GITLAB_CHART_VERSION=10.2.7` |
+| [Validation script](../../scripts/validate.sh) | GitLab chart render target to `10.2.7` |
+
+These are planned edits, not changes made by this guide. Keep CE, manual sync,
+storage, credentials, networking, and external dependencies unchanged.
+
+### Review chart differences
+
+On a dedicated validation host or CI, render both charts using the same values
+and compare the results. Inspect images, migration Jobs, hooks, permissions,
+probes, resources, storage references, ingress, and secret handling. Compare with
+Argo CD's desired manifests and API capabilities as well.
+
+**VALIDATION — run the repository checks in the future patch checkout:**
 
 ```bash
-sha256sum "$ARCHIVE"
-tar -tf "$ARCHIVE"
-tar -xOf "$ARCHIVE" backup_information.yml
-```
-
-Use the exact metadata member path from the tar listing. Inspect version,
-component coverage, DB/repository contents and nested gzip/tar integrity. Verify
-checksums against a downloaded external copy; multipart ETags are not universal
-content checksums. Keep secret recovery material separate from the archive.
-
-**Expected Result:** DB/repositories and all required object buckets succeed;
-zero 403/AccessDenied and unexplained skips; external copy and original Rails
-secret custody verified. Empty components require inventory evidence.
-**PASS/FAIL:** uploaded archive or exit zero alone never passes.
-**Action if Failed:** reject the backup and repair coverage before proceeding.
-
-### 5. Isolated rehearsal
-
-**Purpose:** prove restore and exact patch behavior.
-
-**Command — RECOVERY, isolated context only:**
-
-```bash
-kubectl --context "$RESTORE_CONTEXT" -n "$RESTORE_NAMESPACE" \
-  exec -it deploy/gitlab-toolbox -c toolbox -- \
-  backup-utility --restore -t "$BACKUP_ID"
-```
-
-Before execution: verify the restore context is not production; provision CE
-19.2.6/chart 10.2.6, original Rails encryption secrets, separate credentials and
-storage. Block production endpoints, SMTP, integrations and runners. Stop DB
-clients and control test reconciliation/HPA per the official restore procedure.
-Ensure extraction capacity and database restore privileges are sufficient.
-
-**Expected Result:** recovery from the external copy works; subsequent approved
-patch to CE 19.2.7/chart 10.2.7 passes the same functional checks as production.
-Measure migration/startup duration and recovery time.
-**PASS/FAIL:** data recovery plus patch rehearsal must both pass.
-**Action if Failed:** fix procedure and repeat; no production upgrade.
-
-### 6. Chart render/diff review
-
-**Purpose:** review all target changes and validate the future PR.
-
-**Commands — VALIDATION, CI/dedicated checkout only:**
-
-```bash
-umask 077
-REVIEW_DIR=$(mktemp -d)
-for version in 10.2.6 10.2.7; do
-  helm template gitlab gitlab --repo https://charts.gitlab.io/ \
-    --version "$version" --namespace gitlab --kube-version 1.35.4 \
-    -f helm-values/gitlab/values.yaml \
-    -f helm-values/gitlab/values-production.yaml \
-    > "$REVIEW_DIR/gitlab-$version.yaml"
-done
-diff -u "$REVIEW_DIR/gitlab-10.2.6.yaml" "$REVIEW_DIR/gitlab-10.2.7.yaml"
 bash scripts/validate.sh
 ```
 
-Run against the reviewed future patch checkout with the validation pin updated.
-Diff exit code 1 means differences exist, not that rendering failed. Keep renders
-restricted; review them without publishing generated secrets. Match relevant
-API capabilities to Argo CD's render and check its actual desired manifests.
+The script requires Docker. Run it in CI or a dedicated Docker-capable host.
+**Do not install or enable Docker on the Kubernetes control-plane node.**
+Keep rendered manifests private because they can contain sensitive material.
 
-**Expected Result:** explain every image, migration/hook, RBAC, probe, resource,
-PVC, ingress and Secret delta. No accidental credential regeneration, destructive
-storage replacement, networking change, or dependency upgrade. Full CI passes.
-**PASS/FAIL:** unexplained differences or incomplete CI are failures.
-**Action if Failed:** fix the future PR, not production. Do not bypass missing
-validation tools by installing Docker on the control-plane node.
+### Review the disabled upgrade check
 
-### 7. Production maintenance steps
+[GitLab values](../../helm-values/gitlab/values.yaml) currently set
+`upgradeCheck.enabled: false`, disabling the chart's upgrade-path check. Do not
+silently enable it in the version patch. Document how the upgrade path was
+verified and test any proposed hook change separately.
 
-**Purpose:** execute only the approved patch after every prerequisite passes.
+Argo CD maps supported Helm pre-install/pre-upgrade hooks to its PreSync phase.
+It does not perform a native Helm upgrade. Review hook ordering, permissions,
+recreation, and cleanup in rehearsal. Use a full Application sync: selective
+resource sync does not run hooks.
 
-**Commands — READ-ONLY:**
+### Account for automatic reconciliation
+
+The main GitLab Application is manual, but the parent Application and
+`gitlab-prerequisites` auto-sync. Freeze unrelated changes during the maintenance
+window and record the exact values Git commit. Do not assume `main` still points
+to the reviewed commit when the operator starts the upgrade.
+
+**Pass:** the diff is understood, hook behavior is proven, and full CI passes.
+
+**Fail:** correct the PR or validation environment before scheduling maintenance.
+
+## 5. Upgrade production after approval
+
+**Stop here until steps 1–4 pass and maintenance is explicitly approved.**
+Confirm a fresh verified backup, quiet-window arrangements, the recovery
+operator, and the exact chart/Git revision. Multiple application replicas do not
+guarantee a zero-downtime upgrade.
+
+**READ-ONLY — verify the Argo CD destination and reviewed changes:**
 
 ```bash
 argocd app get gitlab
 argocd app diff gitlab
 ```
 
-Verify the Argo server/destination, chart target and exact values Git SHA. Freeze
-unrelated changes to `main` and prerequisites during the window. A moving `main`
-reference must not introduce unreviewed values between approval and sync.
-Confirm fresh recovery evidence, quiet-window arrangements and an available
-recovery operator. Chart hooks and slow startup need the rehearsed deadline.
-
-**Command — CHANGE, explicit maintenance approval required:**
+**CHANGE — perform the approved full sync:**
 
 ```bash
 argocd app sync gitlab
 ```
 
-Use a full Application sync, not selective resource sync. Do not add force,
-replace, or prune flags to work around an unexplained failure.
-
-**Commands — READ-ONLY:**
+**READ-ONLY — observe progress:**
 
 ```bash
 argocd app wait gitlab --operation --sync --health --timeout 3600
 kubectl --context "$PROD_CONTEXT" -n gitlab get jobs,pods
-kubectl --context "$PROD_CONTEXT" -n gitlab logs job/"$MIGRATION_JOB" --all-containers=true
 ```
 
-**Expected Result:** successful hooks/migrations/rollout within the rehearsed
-window. The example timeout is not a promised completion time; preserve logs
-before hook cleanup. Multiple replicas do not guarantee zero downtime.
-**PASS/FAIL:** failed migration or sustained platform/service failure is FAIL.
-**Action if Failed:** stop further actions, preserve evidence and evaluate recovery;
-do not repeatedly force-sync or delete migration Jobs.
+The one-hour timeout is an example; use the rehearsed deadline. Inspect the
+current migration Job logs and preserve them before hook cleanup.
 
-### 8. Post-upgrade validation
+**Pass:** migrations, hooks, and rollout complete within the approved window.
 
-**Purpose:** verify application version, data and operational stability.
+**Fail:** stop further actions and follow the failure procedure below. Do not
+force-sync repeatedly or delete migration Jobs to hide a failure.
 
-**Commands — VALIDATION:**
+## 6. Verify the upgraded service
+
+**VALIDATION — check version, application health, and secret decryption:**
 
 ```bash
 kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbox -- \
@@ -330,108 +259,59 @@ kubectl --context "$PROD_CONTEXT" -n gitlab exec deploy/gitlab-toolbox -c toolbo
   gitlab-rake gitlab:doctor:secrets
 ```
 
-Repeat platform and migration checks. Exercise login, SSH/HTTPS clone/push,
-pipelines, artifact upload/download, LFS, packages, Registry push/pull and KAS if
-used. Functional write tests are **CHANGE** operations in approved test projects.
+Confirm CE **19.2.7**, chart **10.2.7**, and the target chart's coordinated images.
+Repeat platform and migration checks from step 2. Check login, SSH/HTTPS Git
+operations, pipelines, artifacts, LFS, packages, Registry, and KAS if used.
+Tests that push data or run pipelines are **CHANGE** operations: use approved
+test projects.
 
-**Expected Result:** CE 19.2.7/chart 10.2.7; coordinated chart component images;
-successful migrations; decryptable secrets; stable DB load/lag, queues, restarts,
-errors and storage metrics throughout the agreed observation window.
-**PASS/FAIL:** Synced/Healthy alone is insufficient. Keep the final gate open
-until required post-deployment and background migrations complete.
-**Action if Failed:** keep the maintenance incident open and evaluate recovery.
+Observe database load/lag, queues, restarts, errors, and storage for the agreed
+period. Capture and verify a new-version backup after stabilization.
 
-### 9. Rollback/recovery decision
+**Pass:** all tests pass and required post-deployment/background migrations finish.
 
-**Purpose:** avoid an unsafe downgrade after schema/data changes.
+**Fail:** keep the incident open. `Synced/Healthy` alone is not final acceptance.
 
-**Command — READ-ONLY:** inspect migration state/logs, deployed images, operation
-history and backup timestamps. Determine whether any schema/data changes occurred.
+## If the upgrade fails
 
-**Expected Result:** a documented decision to fix forward or use proven recovery.
-**PASS/FAIL:** uncertainty is not permission to downgrade.
-**Action if Failed — RECOVERY:** explicitly approve the tested procedure to
-restore compatible application, DB, repositories, object data and original
-secrets. Account for writes since the backup; control reconciliation during
-recovery. Do not improvise `helm rollback`, a chart-pin reversal, or SQL rollback.
+1. **READ-ONLY:** preserve logs and establish which migrations and changes ran.
+2. Stop further upgrade actions and involve the recovery operator.
+3. Decide whether to fix forward or use the tested recovery procedure.
+4. **RECOVERY:** restore only with explicit approval, matching application/data
+   versions and original secrets. Account for data written since the backup and
+   control Argo CD reconciliation during recovery.
 
-### 10. Later 19.3/19.4 upgrade review
+**Do not assume changing the chart back to 10.2.6 safely reverses database
+migrations.** Do not improvise a Helm rollback or SQL rollback.
 
-**Purpose:** keep minor releases outside the security patch.
+## Record the decision
 
-**Command — READ-ONLY:** review official version mappings, required stops,
-intervening chart/GitLab notes, background migrations and changed restore behavior.
-**Expected Result:** separate proposal after this patch is accepted.
-**PASS/FAIL:** any 19.3/19.4 change in this PR is out of scope.
-**Action if Failed:** split the change and retain this plan's 19.2.7 target.
+For each row, record the operator, time, PASS/FAIL and a restricted evidence link.
+Missing evidence means the gate is still closed.
 
-## Required future repository changes
-
-| File | Future patch adjustment |
-| --- | --- |
-| `clusters/production/argocd/applications/gitlab.yaml` | `targetRevision: 10.2.6` → `10.2.7` |
-| `helm-values/gitlab/VERSION` | `GITLAB_VERSION=19.2.7`, `GITLAB_CHART_VERSION=10.2.7` |
-| `scripts/validate.sh` | GitLab render target `10.2.6` → `10.2.7` |
-
-This documentation change does not implement these edits. Preserve CE, manual
-sync, runtime identities, storage, networking and external dependencies.
-Any decision to change upgradeCheck must be separately explained and rehearsed.
-
-## Exact pre-upgrade checklist
-
-- [ ] Verified production context and reviewed chart/Git revisions recorded.
-- [ ] Complete backup: zero access denials and unexplained omissions.
-- [ ] Original Rails secrets separately protected and recoverable.
-- [ ] External backup copy downloaded and checksum verified.
-- [ ] Same-version isolated restore passed.
-- [ ] Exact patch rehearsal passed with measured deadlines.
-- [ ] CNPG, Redis/Sentinel, MinIO, Gitaly, TLS/VSO, nodes and storage healthy.
-- [ ] Measured data/WAL/staging headroom and rollout capacity adequate.
-- [ ] Schema and background migrations complete in every configured database.
-- [ ] No concurrent backup/restore, prerequisite change, or platform maintenance.
-- [ ] Target render, hook/Secret/PVC behavior and full CI reviewed.
-- [ ] Recovery owner, acceptable data loss, quiet window and approval recorded.
-
-## Exact post-upgrade checklist
-
-- [ ] Intended workloads use target chart's coordinated images; no old replicas.
-- [ ] CE 19.2.7 and chart source 10.2.7 confirmed.
-- [ ] Hooks, ordinary and post-deployment migrations succeeded.
-- [ ] Background migrations completed before final acceptance.
-- [ ] Application checks and secret-decryption checks passed.
-- [ ] Git, pipeline, artifact, LFS, package and Registry tests passed.
-- [ ] Database lag/load, queues, errors, restarts and storage acceptable.
-- [ ] New-version backup captured and verified after stabilization.
-- [ ] Evidence and final operator acceptance recorded.
-
-## Final GO / NO-GO criteria and evidence
-
-**NO-GO until all mandatory pre-upgrade gates pass.** Known gaps at document
-creation: complete recovery unproven; historical source-access failures not
-resolved by repository changes; separate-secret/external-copy evidence absent;
-current live health and migrations unknown; target hooks/render and full CI pending.
-
-| Gate | Initial status | Evidence to record |
+| Gate | Evidence required | Result |
 | --- | --- | --- |
-| Recovery Ready | Unproven | Backup manifest, secret custody, external checksum, restore report |
-| Platform Healthy | Not freshly verified | Dependency checks, capacity and migration results |
-| Rehearsal Passed | Pending | Restore/patch test report and timing |
-| Chart Validated | Pending | Reviewed renders/diff, hook behavior, CI run |
-| Maintenance Approved | Pending | Operator, reviewer, window, Git SHA and chart |
-| Upgrade | Not executed | Sync operation and migration/rollout logs |
-| Post-Validation Passed | Pending | Functional tests, metrics and final acceptance |
+| Recovery ready | Complete backup, separate secrets, external checksum, restore report | Pending |
+| Platform healthy | Dependency, storage and migration checks | Pending |
+| Rehearsal passed | Successful restore/patch tests and measured timings | Pending |
+| Chart validated | Reviewed diff, hook behavior and full CI result | Pending |
+| Maintenance approved | Approver, window, recovery operator, chart and Git revision | Pending |
+| Upgrade completed | Sync, migration and rollout results | Pending |
+| Post-validation passed | Functional tests, stable metrics, new backup and acceptance | Pending |
 
-## Official references
+**GO:** all pre-upgrade gates pass and maintenance is approved.
 
-- [Critical patch advisory, including migration impact](https://docs.gitlab.com/releases/patches/patch-release-gitlab-19-4-1-released/)
-- [Chart version mappings](https://docs.gitlab.com/charts/installation/version_mappings/)
-- [Helm upgrade procedure](https://docs.gitlab.com/charts/installation/upgrade/)
-- [Upgrade paths](https://docs.gitlab.com/update/upgrade_paths/)
-- [GitLab 19 upgrade notes](https://docs.gitlab.com/update/versions/gitlab_19_changes/)
-- [Migration checks](https://docs.gitlab.com/update/background_migrations/)
-- [Helm backup and secret custody](https://docs.gitlab.com/charts/backup-restore/backup/)
-- [Helm restore procedure](https://docs.gitlab.com/charts/backup-restore/restore/)
-- [Argo CD Helm behavior](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/)
-- [Argo CD resource hooks](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/)
-- [Kubernetes disruption budgets](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
-- [CNPG 1.30 diagnostics and primary-status warnings](https://cloudnative-pg.io/releases/cloudnative-pg-1-30.0-released/)
+**NO-GO:** any recovery, database, storage, migration, or platform check fails or
+remains unverified. Close the upgrade only after post-validation passes.
+
+Review GitLab 19.3/19.4 in a separate plan after this patch is accepted.
+
+## References
+
+- [Patch advisory and migration impact](https://docs.gitlab.com/releases/patches/patch-release-gitlab-19-4-1-released/)
+- [Chart version mappings](https://docs.gitlab.com/charts/installation/version_mappings/) and [upgrade paths](https://docs.gitlab.com/update/upgrade_paths/)
+- [Helm upgrade procedure](https://docs.gitlab.com/charts/installation/upgrade/) and [migration checks](https://docs.gitlab.com/update/background_migrations/)
+- [Backup and secret protection](https://docs.gitlab.com/charts/backup-restore/backup/) and [restore procedure](https://docs.gitlab.com/charts/backup-restore/restore/)
+- [Argo CD Helm behavior](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/) and [resource hooks](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/)
+- [Kubernetes disruption budgets](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) and [CNPG diagnostics](https://cloudnative-pg.io/releases/cloudnative-pg-1-30.0-released/)
+- [Existing GitLab validation guide](deployment-validation-guide.md)
