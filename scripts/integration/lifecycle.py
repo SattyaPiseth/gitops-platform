@@ -101,10 +101,9 @@ class Suite:
         def completed_revision():
             status = (self.get('application', name, 'argocd') or {}).get('status', {})
             sync = status.get('sync', {})
-            operation = status.get('operationState', {})
-            return (sync.get('status') == 'Synced' and sync.get('revision') == revision
-                    and operation.get('phase') == 'Succeeded'
-                    and operation.get('syncResult', {}).get('revision') == revision)
+            # A new revision may already match live resources and need no sync
+            # operation. Require its comparison result, not an older operation.
+            return sync.get('status') == 'Synced' and sync.get('revision') == revision
         wait(name + ' sync at ' + revision, completed_revision)
         return revision
 
