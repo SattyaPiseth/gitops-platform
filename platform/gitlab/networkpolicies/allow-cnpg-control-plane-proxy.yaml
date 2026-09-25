@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cnpg-control-plane-proxy
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: gitlab-postgresql
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.233.100.64/32
+        - ipBlock:
+            cidr: 10.233.101.0/32
+        - ipBlock:
+            cidr: 10.233.97.0/32
+      ports:
+        - protocol: TCP
+          port: 8000
