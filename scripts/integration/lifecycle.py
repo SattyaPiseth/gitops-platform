@@ -98,7 +98,14 @@ class Suite:
     def sync(self, name, path, objects, namespace='lifecycle-tests'):
         revision = self.commit(path, objects)
         self.apply(self.app(name, path, revision, namespace))
-        wait(name + ' sync', lambda: (self.get('application', name, 'argocd') or {}).get('status', {}).get('sync', {}).get('status') == 'Synced')
+        def completed_revision():
+            status = (self.get('application', name, 'argocd') or {}).get('status', {})
+            sync = status.get('sync', {})
+            operation = status.get('operationState', {})
+            return (sync.get('status') == 'Synced' and sync.get('revision') == revision
+                    and operation.get('phase') == 'Succeeded'
+                    and operation.get('syncResult', {}).get('revision') == revision)
+        wait(name + ' sync at ' + revision, completed_revision)
         return revision
 
     def approve(self, name):
