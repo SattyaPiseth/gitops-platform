@@ -33,6 +33,7 @@ configuration source.
 | [Vault Secrets Operator guide](vault-secrets-operator-production-guide.md) | Secret-delivery architecture and day-two operations |
 | [Certificate renewal guide](manual-certificate-renewal-guide.md) | Exceptional manual renewal and certificate-chain verification |
 | [GitLab validation guide](gitlab/deployment-validation-guide.md) | Production acceptance and recovery tests, not declarative configuration |
+| [GitLab patch 19.2.7 readiness](gitlab/patch-19.2.7-readiness-runbook.md) | Approval gates, recovery evidence, patch rehearsal, maintenance and post-upgrade checks |
 
 Component-local runbooks live beside their resources under `platform/` when
 their procedures are tightly coupled to that component, such as MinIO storage
