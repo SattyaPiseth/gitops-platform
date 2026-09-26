@@ -81,6 +81,9 @@ prometheus:
         memory: 4Gi
 
     retention: 15d
+    # Limit retained blocks to 80% of the 50Gi PVC; reserve room for WAL/compaction.
+    # The size limit can expire older metrics before 15 days.
+    retentionSize: 40GiB
     walCompression: true
     enableAdminAPI: false
 
