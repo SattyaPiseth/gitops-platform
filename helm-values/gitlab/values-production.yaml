@@ -109,15 +109,16 @@ gitlab:
         safeToEvict: false
         # Disabled features verified against live configuration and bucket inventory.
         extraArgs: >-
-          --skip external_diffs --skip terraform_state
           --skip pages --skip ci_secure_files --skip agent_plan_content
         resources:
           requests:
             cpu: 500m
             memory: 1Gi
-        # Size working storage from source data before activation; no PVC created now.
         persistence:
-          enabled: false
+          enabled: true
+          size: 10Gi
+          storageClass: longhorn
+          accessMode: ReadWriteOnce
       objectStorage:
         config:
           secret: gitlab-backup-object-storage
