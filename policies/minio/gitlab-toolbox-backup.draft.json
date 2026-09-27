@@ -13,7 +13,9 @@
         "arn:aws:s3:::gitlab-uploads",
         "arn:aws:s3:::gitlab-artifacts",
         "arn:aws:s3:::gitlab-lfs",
-        "arn:aws:s3:::gitlab-packages"
+        "arn:aws:s3:::gitlab-packages",
+        "arn:aws:s3:::gitlab-mr-diffs",
+        "arn:aws:s3:::gitlab-terraform-state"
       ]
     },
     {
@@ -27,7 +29,9 @@
         "arn:aws:s3:::gitlab-uploads/*",
         "arn:aws:s3:::gitlab-artifacts/*",
         "arn:aws:s3:::gitlab-lfs/*",
-        "arn:aws:s3:::gitlab-packages/*"
+        "arn:aws:s3:::gitlab-packages/*",
+        "arn:aws:s3:::gitlab-mr-diffs/*",
+        "arn:aws:s3:::gitlab-terraform-state/*"
       ]
     },
     {
