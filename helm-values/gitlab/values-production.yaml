@@ -93,6 +93,31 @@ registry:
 gitlab:
   toolbox:
     backups:
+      # Preparation only: enable after external-copy and isolated-restore gates pass.
+      cron:
+        enabled: false
+        suspend: true
+        # Proposed daily time; confirm the maintenance window before activation.
+        schedule: "0 2 * * *"
+        timeZone: Asia/Phnom_Penh
+        concurrencyPolicy: Forbid
+        startingDeadlineSeconds: 600
+        backoffLimit: 0
+        restartPolicy: Never
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 3
+        safeToEvict: false
+        # Disabled features verified against live configuration and bucket inventory.
+        extraArgs: >-
+          --skip external_diffs --skip terraform_state
+          --skip pages --skip ci_secure_files --skip agent_plan_content
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        # Size working storage from source data before activation; no PVC created now.
+        persistence:
+          enabled: false
       objectStorage:
         config:
           secret: gitlab-backup-object-storage
