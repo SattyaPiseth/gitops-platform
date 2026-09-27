@@ -114,13 +114,11 @@ gitlab:
           requests:
             cpu: 500m
             memory: 1Gi
-            
         persistence:
           enabled: true
           size: 10Gi
           storageClass: longhorn
           accessMode: ReadWriteOnce
-
       objectStorage:
         config:
           secret: gitlab-backup-object-storage
