@@ -77,7 +77,7 @@ render_chart() {
     "$@" >"${render_directory}/${release_name}.yaml"
 }
 
-render_chart cnpg cnpg/cloudnative-pg 0.29.0 cnpg-system --values helm-values/cnpg/values.yaml
+render_chart cnpg cnpg/cloudnative-pg 0.29.1 cnpg-system --values helm-values/cnpg/values.yaml
 render_chart gitlab-redis opstree/redis-replication 0.17.1 gitlab --values helm-values/gitlab/redis-values.yaml
 render_chart gitlab-runner gitlab/gitlab-runner 0.91.3 gitlab --values helm-values/gitlab-runner/values.yaml
 render_chart gitlab gitlab/gitlab 10.2.7 gitlab --values helm-values/gitlab/values.yaml --values helm-values/gitlab/values-production.yaml
