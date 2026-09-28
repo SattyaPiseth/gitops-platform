@@ -1,4 +1,4 @@
-# Backup prerequisites only; Cluster plugin activation is a separate change.
+# Dedicated PostgreSQL archive; retention is configured separately.
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
@@ -8,6 +8,13 @@ metadata:
     app.kubernetes.io/part-of: gitlab
     app.kubernetes.io/managed-by: argocd
 spec:
+  instanceSidecarConfiguration:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
   configuration:
     destinationPath: s3://cnpg-backups/gitlab-production/
     endpointURL: https://minio.minio-system.svc.cluster.local

@@ -15,6 +15,13 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.9@sha256:855b5f86257a51f49e406f4de317205d42313b64ef81644675f0263e8efec116
   instances: 3
 
+  # Activates WAL archival; reconcile during an observed database maintenance window.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: gitlab-postgresql-backups
+
   bootstrap:
     initdb:
       database: gitlabhq_production
