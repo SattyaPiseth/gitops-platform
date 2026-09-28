@@ -1,0 +1,24 @@
+# Backup prerequisites only; Cluster plugin activation is a separate change.
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: gitlab-postgresql-backup
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  vaultAuthRef: gitlab-vault-auth
+  type: kv-v2
+  mount: kv
+  path: gitlab/postgresql-backup
+  refreshAfter: 5m
+  hmacSecretData: true
+  destination:
+    create: true
+    name: gitlab-postgresql-backup
+    transformation:
+      excludeRaw: true
+      includes:
+        - '^accessKeyId$'
+        - '^secretAccessKey$'

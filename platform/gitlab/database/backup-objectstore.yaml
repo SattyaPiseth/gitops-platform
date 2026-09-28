@@ -1,0 +1,35 @@
+# Dedicated PostgreSQL archive; retention is configured separately.
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: gitlab-postgresql-backups
+  namespace: gitlab
+  labels:
+    app.kubernetes.io/part-of: gitlab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  instanceSidecarConfiguration:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+  configuration:
+    destinationPath: s3://cnpg-backups/gitlab-production/
+    endpointURL: https://minio.minio-system.svc.cluster.local
+    endpointCA:
+      name: gitlab-tls
+      key: ca.crt
+    s3Credentials:
+      accessKeyId:
+        name: gitlab-postgresql-backup
+        key: accessKeyId
+      secretAccessKey:
+        name: gitlab-postgresql-backup
+        key: secretAccessKey
+    data:
+      compression: gzip
+      jobs: 1
+    wal:
+      compression: gzip
