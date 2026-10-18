@@ -17,6 +17,8 @@ metadata:
   labels:
     app.kubernetes.io/part-of: argocd
 data:
+  # Traefik terminates HTTPS and forwards HTTP to argocd-server.
+  server.insecure: "true"
   # Keep reconciliation concurrency proportional to this small cluster.
   controller.status.processors: "10"
   controller.operation.processors: "5"
