@@ -6,6 +6,8 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm
   name: kube-prometheus-stack
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 
 spec:
   project: platform
