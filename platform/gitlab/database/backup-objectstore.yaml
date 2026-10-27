@@ -4,6 +4,9 @@ kind: ObjectStore
 metadata:
   name: gitlab-postgresql-backups
   namespace: gitlab
+  annotations:
+    # Apply after the generated credential Secret and before the Cluster (-1).
+    argocd.argoproj.io/sync-wave: "-2"
   labels:
     app.kubernetes.io/part-of: gitlab
     app.kubernetes.io/managed-by: argocd

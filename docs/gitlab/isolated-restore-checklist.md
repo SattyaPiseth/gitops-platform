@@ -1,20 +1,25 @@
 # GitLab isolated restore checklist
 
-Status: preparation only. No restore environment or external backup destination is available. Automated backups remain disabled under the agreed recovery gate.
+Status: recovery gate closed. The isolated restore drill is deferred by the owner because test capacity is unavailable; it has not passed. A verified external archive copy exists; an isolated restore and encrypted recovery-secret copy are still pending. Automated backups remain disabled.
 
-## Evidence already collected
+## Verified archive
 
-- Backup ID: `1790447325_2026_09_26_19.2.7`
+- Backup ID: `1790506879_2026_09_27_19.2.7` (GitLab CE 19.2.7).
 - Archive size: 2,754,560 bytes.
-- SHA-256: `3dcc5903c4921195818a0bd6be2c6b8cd6a00ced5b7bb590c0bb90afa96b4fce`
-- Local archive structure and compressed database/uploads passed inspection. Repository files are present; repository integrity and application restore remain untested.
-- Archive permissions were changed to `0600`. Recovery secrets were already `0600`; their contents were not read.
-- The management-node copy is staging, not an independently protected offsite backup.
-- No full backup log was found among the files listed in the provided Antigravity handoff directory. The browser scratchpad has not been inspected for embedded logs.
+- SHA-256: `964aae43a56d53f1dc8ccc456101ad11f67814b6432dda7bce77f80d398737f0`.
+- Local evidence: `/home/sysadmin/.local/share/gitlab-recovery/1790506879_2026_09_27_19.2.7/`.
+- External archive: `manager@172.16.6.5:/opt/backups/gitlab/1790506879_2026_09_27_19.2.7_gitlab_backup.tar`.
+- Both archive checksums were rechecked during the recovery-stage review and match. External file permissions are `0600`.
+- Saved verification records document archive checks and explain the builds omission: the database dump contains no CI build, job-artifact, or trace rows. These are historical snapshot findings, not a new production backup.
+- Neither archive inspection nor checksum matching proves successful application recovery.
 
-## Resolve incomplete evidence
+## Remaining inputs
 
-Backup metadata also marks builds, registry, artifacts, LFS and packages skipped. Earlier administrator reports show the four object buckets empty, but they do not prove the state at backup time. Determine why builds was skipped and corroborate all skips from the original log. If that log cannot be recovered, plan an approved fresh backup with securely captured logs; do not label the existing archive complete from its exit status or structure alone.
+1. Select an isolated test cluster, owner, and restore window. No test target is confirmed.
+2. Supply an approved encryption recipient/public key for the separate recovery-secret copy. Never put private keys or secret values in Git.
+3. Confirm whether the external host uses a different physical host/datastore from production. An external VM alone does not prove independent storage.
+4. Obtain sanitized administrator confirmation that the previously exposed MinIO root credential was rotated. Do not use that credential for verification.
+5. Recheck the live seven-source-bucket backup policy before another backup; prior five-bucket evidence does not establish the newer scope.
 
 ## Prepare a separate test environment
 
@@ -46,7 +51,7 @@ This follows the [official Helm restore procedure](https://docs.gitlab.com/chart
 
 ## Separate external-copy gate
 
-Provision an independently administered destination outside this cluster, with protected credentials and agreed retention. Copy and checksum-verify both the archive and separately encrypted recovery material. A successful local drill does not satisfy this external-copy gate.
+The archive copy above passes checksum verification. Confirm its independent failure domain and retention, then transfer and verify separately encrypted recovery material. Never copy plaintext Rails secrets to the external host. A successful local drill does not satisfy this external-copy gate.
 
 Scheduling stays disabled until backup completeness, external copy and the restore drill are accepted. See [policy review](backup-policy-review.md).
 
@@ -56,7 +61,7 @@ Scheduling stays disabled until backup completeness, external copy and the resto
 
 `Forbid` prevents overlap between jobs of this CronJob, but does not block manual Toolbox backups. Automatic retries are disabled so failures require review. Job history limits retain Kubernetes job records, not backup archives. No archive-deletion permission or retention pruning is added.
 
-Before activation, confirm the schedule, working-storage capacity, time limit based on measured backup duration, network-policy selection for CronJob pods, and resource requests in a rehearsal. The preparation leaves persistence disabled and creates no PVC. Determine whether dedicated scratch storage is needed from source data plus archive size, not the current compressed sample alone.
+Before activation, confirm the schedule, working-storage capacity, time limit based on measured backup duration, network-policy selection for CronJob pods, and resource requests in a rehearsal. The values now propose a 10 GiB Longhorn RWO scratch volume with persistence enabled, while the CronJob remains disabled. Validate the rendered PVC behavior and size scratch storage from source data plus archive size, not the current compressed sample alone.
 
 The chart invokes backup-utility directly: it can report success after a component access check was skipped. A failure-detection mechanism for 403s, unexpected skips, missing archives and stale backups must be implemented and rehearsed before activation. Do not equate a successful Job with an accepted backup.
 

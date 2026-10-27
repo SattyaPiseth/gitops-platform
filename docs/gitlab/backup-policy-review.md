@@ -1,6 +1,6 @@
 # GitLab backup policy review
 
-Status: draft only. Permission structure reviewed; bucket coverage and effective access remain unverified. Recovery readiness is not proven.
+Status: standing-policy and Toolbox rotation deployment were reported in the operational handoff. The current repository policy covers seven source buckets; its full live effective scope still needs revalidation. Recovery readiness is not proven. See the [current recovery checklist](isolated-restore-checklist.md).
 
 ## Version baseline
 
@@ -10,7 +10,7 @@ Official online documentation changes over time. Installed backup source was ins
 
 ## Proposed change
 
-The [draft MinIO policy](../../policies/minio/gitlab-toolbox-backup.draft.json) gives the dedicated Toolbox identity read access to five named source buckets and upload/read access to `gitlab-backups`. It includes multipart upload support, but no object deletion, source writes, bucket creation, account-wide bucket listing, or administrative actions.
+The [draft MinIO policy](../../policies/minio/gitlab-toolbox-backup.draft.json) gives the dedicated Toolbox identity read access to seven named source buckets and upload/read access to `gitlab-backups`. It includes multipart upload support, but no object deletion, source writes, bucket creation, account-wide bucket listing, or administrative actions.
 
 Rails and Registry keep their separate credentials. No networking changes are proposed.
 
@@ -43,7 +43,7 @@ The `2012-10-17` policy Version is the policy-language identifier, not the GitLa
 ## Evidence required before applying
 
 1. MinIO administrator: supply sanitized policy JSON for direct attachments, groups and service-account restrictions. Include conditions and explicit denies. Confirm the restore policy is detached.
-2. Inspect current and historical/versioned objects in `gitlab-mr-diffs` and `gitlab-terraform-state`. Administrator reports both empty and un-versioned; live configuration disables both. Their grants have now been removed from the draft.
+2. Inspect current and historical/versioned objects in `gitlab-mr-diffs` and `gitlab-terraform-state`. Administrator reports both empty and un-versioned; live configuration disables both. The current draft retains read/list grants for both buckets; the proposed CronJob does not skip them. Verify live permissions match before execution.
 3. Check enabled features and historical data for Pages, CI secure files, agent plan content and dependency proxy. Add only the required exact bucket names after reviewing the installed backup utility behavior. Recheck this scope whenever features are enabled.
 4. Keep `gitlab-backup-tmp` permissions out of the standing policy: installed code uses it for the restore safety copy, not normal backup.
 5. Vault administrator: confirm `kv/gitlab/object-storage/backup` metadata and the presence of `config`, without exposing its value.
@@ -66,7 +66,7 @@ These findings justify retaining the draft's source-read-only scope, omitting te
 
 After explicit approval, apply only the reviewed standing policy and keep restore permissions detached. Rotate only the dedicated Toolbox credential through Vault/VSO. Never put credentials in Git or command output.
 
-The Toolbox copies projected Secret data during initialization. Propose adding this field under the backup VaultStaticSecret `spec` before rotation:
+The Toolbox copies projected Secret data during initialization. The backup VaultStaticSecret already contains this restart target:
 
 ```yaml
 rolloutRestartTargets:
@@ -74,7 +74,7 @@ rolloutRestartTargets:
     name: gitlab-toolbox
 ```
 
-The restart target is prepared in the local VSO manifest only; it is not deployed. Before deploying the restart target, confirm no backup or restore is running. Verify synchronization and the refreshed Toolbox configuration without displaying credentials; revoke the old credential after successful validation.
+The operational handoff reports this target deployed and the dedicated credential rotated through Vault/VSO. Do not repeat rotation merely because this runbook originally described preparation. Before deploying the restart target, confirm no backup or restore is running. Verify synchronization and the refreshed Toolbox configuration without displaying credentials; revoke the old credential after successful validation.
 
 ## Acceptance gate
 
@@ -96,15 +96,15 @@ An uploaded archive or exit code zero alone is not acceptance.
 - [MinIO policy action reference](https://docs.min.io/aistor/administration/iam/access/)
 - [S3 multipart operations and permissions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html)
 
-## Reviewed evidence and proposed rollout
+## Historical administrative evidence and future execution
 
 Toolbox `host_base` and the administrator's `prod` alias both identify `minio.minio-system.svc.cluster.local`. HTTPS is enabled. Do not copy the administrator's `--insecure` option into backup configuration.
 
-Administrator reports: user `gitlab-backup` has only policy `gitlab-backup`, no groups and no child access keys. Existing policy grants writes/deletes only to the archive and temporary buckets. All inspected buckets report private/un-versioned; only uploads contains current objects (3 objects, 146 KiB). The backup bucket is empty. These are administrator-reported observations, not an independently exported complete bucket-policy audit.
+Administrator reports: user `gitlab-backup` has only policy `gitlab-backup`, no groups and no child access keys. Existing policy grants writes/deletes only to the archive and temporary buckets. All inspected buckets report private/un-versioned; only uploads contains current objects (3 objects, 146 KiB). The backup bucket was empty at that earlier inspection; this is not a current inventory. These are administrator-reported observations, not an independently exported complete bucket-policy audit.
 
 Live generated GitLab configuration confirms Pages, CI secure files, agent plan content, external diffs, Terraform state and dependency proxy disabled. Artifacts, uploads, LFS and packages are enabled. Registry remains in backup scope. Recheck feature settings and bucket contents immediately before execution; investigate any unexpected state.
 
-Policy replacement and VSO preparation approved by the user; production application remains pending. Credential rotation and backup execution require their subsequent gates.
+The handoff subsequently reported policy replacement, VSO deployment, credential rotation, and a manual backup. The steps below describe the procedure for future changes, not instructions to repeat completed work. Current archive evidence and outstanding recovery gates are in the recovery checklist.
 
 1. The administrator confirms IAM policy `gitlab-backup` is attached only to user `gitlab-backup`. Using separately authenticated administrative access, replace its contents with the reviewed draft. Do not merely add grants while leaving archive-delete permissions attached. Keep restore grants detached.
 2. Review and deploy the local backup VSO restart target through GitOps. Confirm no backup/restore is active before sync or rotation.
@@ -114,11 +114,10 @@ Policy replacement and VSO preparation approved by the user; production applicat
 
 ```sh
 kubectl exec -n gitlab deploy/gitlab-toolbox -c toolbox -- \
-  backup-utility --skip external_diffs --skip terraform_state \
-  --skip pages --skip ci_secure_files --skip agent_plan_content
+  backup-utility --skip pages --skip ci_secure_files --skip agent_plan_content
 ```
 
-These five intentional skips must be recorded alongside the feature and inventory evidence. Any additional skipped component, failed bucket check or 403 fails acceptance. An empty required bucket may produce no component tar; distinguish verified empty input from access failure.
+These three intentional skips must be recorded alongside the feature and inventory evidence. Any additional skipped component, failed bucket check or 403 fails acceptance. An empty required bucket may produce no component tar; distinguish verified empty input from access failure.
 
 6. Verify DB/repository stages, archive content and metadata, separately protected recovery secrets, an external verified copy, and an isolated same-version CE restore before declaring readiness.
 

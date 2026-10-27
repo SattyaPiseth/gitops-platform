@@ -4,6 +4,9 @@ kind: VaultStaticSecret
 metadata:
   name: gitlab-postgresql-backup
   namespace: gitlab
+  annotations:
+    # The generated Secret must exist before the ObjectStore and Cluster use it.
+    argocd.argoproj.io/sync-wave: "-3"
   labels:
     app.kubernetes.io/part-of: gitlab
     app.kubernetes.io/managed-by: argocd
@@ -17,6 +20,9 @@ spec:
   destination:
     create: true
     name: gitlab-postgresql-backup
+    # CNPG reloads this Secret when Vault rotates the object-store credential.
+    labels:
+      cnpg.io/reload: ""
     transformation:
       excludeRaw: true
       includes:

@@ -1,13 +1,15 @@
 # CNPG backup activation
 
-Status: prepared locally; not deployed. Recovery testing remains deferred.
+Status: the repository's desired state enables WAL archival through the Barman
+plugin. Git reconciliation and successful archival still require live
+verification; no base-backup schedule or successful restore drill is declared.
 
 ## Before merging
 
-Merging activates WAL archival through automated gitlab-prerequisites sync.
-Observe this change during a database maintenance window. A sidecar rollout
-can replace database pods and a supervised primary update may need operator
-intervention. Do not switch to unsupervised updates simply to finish the rollout.
+Any change to the Cluster plugin or ObjectStore can roll database Pods. Observe
+such changes during a database maintenance window. A sidecar rollout can replace
+database Pods and a supervised primary update may need operator intervention. Do
+not switch to unsupervised updates simply to finish the rollout.
 
 - Recheck all three instances Ready and both replicas streaming without lag.
 - Recheck worker requests: the preparation snapshot reached 94% memory and
@@ -17,9 +19,11 @@ intervention. Do not switch to unsupervised updates simply to finish the rollout
 - Confirm Longhorn volumes healthy, sufficient data/WAL free space, and no
   competing maintenance, backup, or restore.
 - Verify a current application backup and external archive are available.
-- Prerequisite PR #14 is deployed; VSO and ObjectStore exist. Toolbox tests
-  passed TLS, prefix listing, upload/readback, multipart completion and abort.
-  Those tests do not prove database-side Barman operation.
+- The desired state includes a VaultStaticSecret (sync wave -3) and ObjectStore
+  (sync wave -2) before the Cluster (sync wave -1). Confirm the generated
+  credential Secret is synced and the ObjectStore is Ready before treating the
+  Cluster update as safe. The Secret carries `cnpg.io/reload` so a credential
+  rotation can be reloaded by CNPG; verify that behavior in the live cluster.
 - Administrator reports the two validation objects removed. Do not reuse a
   prefix containing an unrelated PostgreSQL archive.
 
